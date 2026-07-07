@@ -79,7 +79,8 @@ public final class BridgeLiveCaptureQueue {
             if (processed > 0 || pending > 0) {
                 long elapsedNanos = System.nanoTime() - startedAt;
                 int activeLeases = BridgeLoadLeaseTracker.countActiveNoPurge(BridgePaths.getRuntimeCacheKey(world));
-                VwgXwmBridgeClient.LOGGER.info(
+                BridgeLog.info(
+                    VwgXwmBridgeClient.LOGGER,
                     "[VWG->XWM Bridge][Perf] live_capture dim={} processed={} pending={} elapsedMs={} leaseActive={}",
                     world.dimension().identifier(),
                     processed,

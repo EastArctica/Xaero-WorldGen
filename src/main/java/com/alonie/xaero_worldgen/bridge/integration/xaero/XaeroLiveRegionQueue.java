@@ -896,7 +896,8 @@ public final class XaeroLiveRegionQueue {
             return;
         }
 
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase={} dim={} regionX={} regionZ={} {}",
             phase,
             world.dimension().identifier(),

@@ -239,7 +239,8 @@ public final class BridgeSourcePolicy {
         );
         boolean regionFileExists = coverage.fileExists();
         int mcaChunkCount = coverage.chunkCount();
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase=SOURCE_POLICY result={} dim={} regionX={} regionZ={} regionFileExists={} mcaChunkCount={}",
             policy.id,
             world.dimension().identifier(),
@@ -248,7 +249,8 @@ public final class BridgeSourcePolicy {
             regionFileExists,
             mcaChunkCount
         );
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase=SOURCE_POLICY_DETAIL result={} dim={} regionX={} regionZ={} regionFileExists={} mcaChunkCount={}",
             policy.id,
             world.dimension().identifier(),
@@ -268,7 +270,8 @@ public final class BridgeSourcePolicy {
         }
         LAST_EVENT_EPOCH.put(key, now);
 
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase={} dim={} regionX={} regionZ={} {}",
             phase,
             world.dimension().identifier(),

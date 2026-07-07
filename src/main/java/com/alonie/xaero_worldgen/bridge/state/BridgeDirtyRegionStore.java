@@ -307,7 +307,8 @@ public final class BridgeDirtyRegionStore {
                 state.versionSeeds.put(packedRegion, Math.max(state.getVersionSeed(packedRegion), dirtyVersion));
             }
         } catch (Exception exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to load dirty regions from {}: {}",
                 dirtyFile,
                 exception.toString()
@@ -322,7 +323,8 @@ public final class BridgeDirtyRegionStore {
             return;
         }
         long seed = getVersionSeed(world, regionX, regionZ);
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase=DIRTY_VERSION dim={} regionX={} regionZ={} action={} seed={} active={}",
             world.dimension().identifier(),
             regionX,
@@ -362,7 +364,8 @@ public final class BridgeDirtyRegionStore {
             Files.write(dirtyFile, lines, StandardCharsets.UTF_8);
             return true;
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to persist dirty regions to {}: {}",
                 dirtyFile,
                 exception.toString()

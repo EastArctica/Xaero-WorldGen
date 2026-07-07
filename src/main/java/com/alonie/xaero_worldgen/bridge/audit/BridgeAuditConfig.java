@@ -77,9 +77,10 @@ public final class BridgeAuditConfig {
             lastKnownModifiedMillis = modified;
             lastLoadedEpochMillis = System.currentTimeMillis();
             VwgXwmBridgeClient.LOGGER.info(
-                "[VWG->XWM Bridge][Trace] phase=AUDIT_CONFIG result=loaded path={} enabled={} interval_ticks={} max_regions_per_tick={} near_radius={} top_k={} loaded_ttl_ticks={} mca_header_refresh_ticks={} time_budget_micros={}",
+                "[VWG->XWM Bridge][Trace] phase=AUDIT_CONFIG result=loaded path={} enabled={} logging_enabled={} interval_ticks={} max_regions_per_tick={} near_radius={} top_k={} loaded_ttl_ticks={} mca_header_refresh_ticks={} time_budget_micros={}",
                 CONFIG_PATH,
                 CURRENT.enabled(),
+                CURRENT.loggingEnabled(),
                 CURRENT.intervalTicks(),
                 CURRENT.maxRegionsPerTick(),
                 CURRENT.nearRadius(),
@@ -111,6 +112,7 @@ public final class BridgeAuditConfig {
 
     private static Config parse(Properties properties, Config defaults) {
         boolean enabled = parseBoolean(properties, "enabled", defaults.enabled());
+        boolean loggingEnabled = parseBoolean(properties, "logging_enabled", defaults.loggingEnabled());
         int intervalTicks = parseInt(properties, "interval_ticks", defaults.intervalTicks(), 5, 1_200);
         int maxRegionsPerTick = parseInt(properties, "max_regions_per_tick", defaults.maxRegionsPerTick(), 1, 32);
         int nearRadius = parseInt(properties, "near_radius", defaults.nearRadius(), 0, 8);
@@ -121,6 +123,7 @@ public final class BridgeAuditConfig {
 
         return new Config(
             enabled,
+            loggingEnabled,
             intervalTicks,
             maxRegionsPerTick,
             nearRadius,
@@ -134,6 +137,7 @@ public final class BridgeAuditConfig {
     private static void writeDefaults(Config defaults) throws IOException {
         Properties defaultsProperties = new Properties();
         defaultsProperties.setProperty("enabled", Boolean.toString(defaults.enabled()));
+        defaultsProperties.setProperty("logging_enabled", Boolean.toString(defaults.loggingEnabled()));
         defaultsProperties.setProperty("interval_ticks", Integer.toString(defaults.intervalTicks()));
         defaultsProperties.setProperty("max_regions_per_tick", Integer.toString(defaults.maxRegionsPerTick()));
         defaultsProperties.setProperty("near_radius", Integer.toString(defaults.nearRadius()));
@@ -174,6 +178,7 @@ public final class BridgeAuditConfig {
 
     public record Config(
         boolean enabled,
+        boolean loggingEnabled,
         int intervalTicks,
         int maxRegionsPerTick,
         int nearRadius,
@@ -184,6 +189,7 @@ public final class BridgeAuditConfig {
     ) {
         public static Config defaults() {
             return new Config(
+                true,
                 true,
                 40,
                 2,

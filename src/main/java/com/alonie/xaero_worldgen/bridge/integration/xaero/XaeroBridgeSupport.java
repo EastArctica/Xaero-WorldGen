@@ -791,7 +791,8 @@ public final class XaeroBridgeSupport {
         }
 
         if (!cacheFile.delete()) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to delete stale Xaero cache file {} for region {},{}",
                 cacheFile,
                 region.getRegionX(),
@@ -811,7 +812,8 @@ public final class XaeroBridgeSupport {
                 BridgeRegionAuditService.touchRegion(world, regionX, regionZ, "clear_dirty");
             }
         }
-        VwgXwmBridgeClient.LOGGER.info(
+        BridgeLog.info(
+            VwgXwmBridgeClient.LOGGER,
             "[VWG->XWM Bridge][Trace] phase={} dim={} regionX={} regionZ={} {}",
             phase,
             dimension,

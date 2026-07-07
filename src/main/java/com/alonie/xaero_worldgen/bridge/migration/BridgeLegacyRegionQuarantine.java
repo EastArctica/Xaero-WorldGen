@@ -71,7 +71,8 @@ public final class BridgeLegacyRegionQuarantine {
                         + size
                 );
             } catch (IOException exception) {
-                VwgXwmBridgeClient.LOGGER.warn(
+                BridgeLog.warn(
+                    VwgXwmBridgeClient.LOGGER,
                     "[VWG->XWM Bridge] Failed quarantining legacy stub region {}: {}",
                     source,
                     exception.toString()
@@ -81,7 +82,8 @@ public final class BridgeLegacyRegionQuarantine {
 
         appendManifest(world, manifestLines);
         if (moved > 0) {
-            VwgXwmBridgeClient.LOGGER.info(
+            BridgeLog.info(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Quarantined {} legacy bridge stub region files for {} (scanned={}, skipped_non_stub={}).",
                 moved,
                 world.dimension().identifier(),
@@ -111,7 +113,8 @@ public final class BridgeLegacyRegionQuarantine {
             }
             return true;
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to inspect candidate legacy region file {}: {}",
                 source,
                 exception.toString()
@@ -154,7 +157,8 @@ public final class BridgeLegacyRegionQuarantine {
                 StandardOpenOption.APPEND
             );
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed writing quarantine manifest {}: {}",
                 manifest,
                 exception.toString()

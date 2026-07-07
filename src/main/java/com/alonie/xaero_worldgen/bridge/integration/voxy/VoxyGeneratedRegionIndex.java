@@ -66,7 +66,8 @@ public final class VoxyGeneratedRegionIndex {
         }
 
         if (additions > 0 || dirtyMarked > 0) {
-            VwgXwmBridgeClient.LOGGER.info(
+            BridgeLog.info(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Bootstrapped {} Voxy-backed Xaero regions for {} (newKnown={}, newDirty={}).",
                 currentRegions.size(),
                 world.dimension().identifier(),
@@ -165,7 +166,8 @@ public final class VoxyGeneratedRegionIndex {
                 state.regions.add(BridgeDirtyRegionStore.packRegion(regionX, regionZ));
             }
         } catch (Exception exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to load known-region index {}: {}",
                 knownFile,
                 exception.toString()
@@ -191,7 +193,8 @@ public final class VoxyGeneratedRegionIndex {
                 regionKeys.add(BridgeDirtyRegionStore.packRegion(chunkX >> 5, chunkZ >> 5));
             }
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed reading {}: {}",
                 indexFile,
                 exception.toString()
@@ -223,7 +226,8 @@ public final class VoxyGeneratedRegionIndex {
             Files.write(knownFile, lines, StandardCharsets.UTF_8);
             return true;
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to persist known-region index {}: {}",
                 knownFile,
                 exception.toString()

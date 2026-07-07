@@ -36,7 +36,8 @@ public final class VoxyRegionFileStub {
                 raf.setLength(STUB_REGION_FILE_SIZE);
             }
         } catch (IOException exception) {
-            VwgXwmBridgeClient.LOGGER.warn(
+            BridgeLog.warn(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge] Failed to create stub region file {}: {}",
                 regionFile,
                 exception.toString()

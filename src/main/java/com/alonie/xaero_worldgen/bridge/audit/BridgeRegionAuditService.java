@@ -391,7 +391,8 @@ public final class BridgeRegionAuditService {
         long lastSummaryTick = LAST_SUMMARY_TICK.getOrDefault(runtimeKey, -1L);
         if (lastSummaryTick < 0L || tick - lastSummaryTick >= SUMMARY_INTERVAL_TICKS) {
             LAST_SUMMARY_TICK.put(runtimeKey, tick);
-            VwgXwmBridgeClient.LOGGER.info(
+            BridgeLog.info(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge][Trace] phase=AUDIT_ROLLUP dim={} result=window processed={} considered={} near_missing_ratio={} far_missing_ratio={} classify={} stalled_top={}",
                 world.dimension().identifier(),
                 processed,
@@ -1001,7 +1002,8 @@ public final class BridgeRegionAuditService {
                         + ",classify="
                         + classification
                 );
-                VwgXwmBridgeClient.LOGGER.info(
+                BridgeLog.info(
+                    VwgXwmBridgeClient.LOGGER,
                     "[VWG->XWM Bridge][Trace] phase=VISIBILITY_GAP dim={} regionX={} regionZ={} windows={} loaded_session={} loaded_visible={} gap_count={} hole_ratio={} classify={}",
                     world.dimension().identifier(),
                     regionX,
@@ -1042,7 +1044,8 @@ public final class BridgeRegionAuditService {
                         + ",classify="
                         + classification
                 );
-                VwgXwmBridgeClient.LOGGER.info(
+                BridgeLog.info(
+                    VwgXwmBridgeClient.LOGGER,
                     "[VWG->XWM Bridge][Trace] phase=ZOOM_GAP_CORRELATION dim={} regionX={} regionZ={} loaded_session={} loaded_visible={} prev_visible={} prev_session={} missing={} prev_missing={} classify={}",
                     world.dimension().identifier(),
                     regionX,

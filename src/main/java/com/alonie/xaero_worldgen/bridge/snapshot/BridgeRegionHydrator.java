@@ -108,7 +108,8 @@ public final class BridgeRegionHydrator {
 
             if (result.processedChunks > 0 || runtimeTaskCount > 0) {
                 int activeLeases = BridgeLoadLeaseTracker.countActiveNoPurge(runtimeCacheKey);
-                VwgXwmBridgeClient.LOGGER.info(
+                BridgeLog.info(
+                    VwgXwmBridgeClient.LOGGER,
                     "[VWG->XWM Bridge][Perf] hydrator dim={} processed={} pending={} paused={} active={} elapsedMs={} leaseActive={}",
                     world.dimension().identifier(),
                     result.processedChunks,

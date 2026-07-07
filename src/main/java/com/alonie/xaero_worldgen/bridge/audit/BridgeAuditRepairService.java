@@ -9,6 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
+import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 
@@ -204,7 +205,8 @@ public final class BridgeAuditRepairService {
         );
 
         if (tick % SUMMARY_INTERVAL_TICKS == 0L) {
-            com.alonie.xaero_worldgen.VwgXwmBridgeClient.LOGGER.info(
+            BridgeLog.info(
+                VwgXwmBridgeClient.LOGGER,
                 "[VWG->XWM Bridge][Trace] phase=REPAIR_ROLLUP dim={} result=window processed={} candidates={} cooldownSkipped={} policySkipped={} budgetLimited={} elapsedMicros={}",
                 world.dimension().identifier(),
                 processed,
