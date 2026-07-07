@@ -33,21 +33,21 @@ public final class BridgeBuildQualityTracker {
     }
 
     public static void recordVanillaHit(ServerLevel world, ChunkPos chunkPos) {
-        ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5));
+        ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x() >> 5, chunkPos.z() >> 5));
         if (activeBuild == null) {
             return;
         }
 
-        activeBuild.recordVanillaHit(packChunk(chunkPos.x, chunkPos.z));
+        activeBuild.recordVanillaHit(packChunk(chunkPos.x(), chunkPos.z()));
     }
 
     public static void recordFallbackResult(ServerLevel world, ChunkPos chunkPos, boolean hit, boolean coordMismatch) {
-        ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5));
+        ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x() >> 5, chunkPos.z() >> 5));
         if (activeBuild == null) {
             return;
         }
 
-        activeBuild.recordFallback(packChunk(chunkPos.x, chunkPos.z), hit, coordMismatch);
+        activeBuild.recordFallback(packChunk(chunkPos.x(), chunkPos.z()), hit, coordMismatch);
     }
 
     public static BuildQuality endRegionBuild(ServerLevel world, int regionX, int regionZ, boolean built) {

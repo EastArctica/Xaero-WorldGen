@@ -17,9 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class VoxyIntegrationMixin {
     @Inject(method = "ingestChunk", at = @At("TAIL"))
     private static void vwgxwm$markIngestedChunk(LevelChunk chunk, CallbackInfo ci) {
-        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
-        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z)) {
-            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
+        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z());
+        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z())) {
+            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z());
         }
     }
 
@@ -28,9 +28,9 @@ public abstract class VoxyIntegrationMixin {
         at = @At("TAIL")
     )
     private static void vwgxwm$markRawChunk(LevelChunk chunk, DataLayer blockLight, CallbackInfo ci) {
-        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
-        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z)) {
-            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
+        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z());
+        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z())) {
+            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x(), chunk.getPos().z());
         }
     }
 

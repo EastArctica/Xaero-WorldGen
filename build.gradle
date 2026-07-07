@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -34,20 +34,19 @@ loom {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    // sodium+mc1.21.11-0.8.7-fabric
-	modImplementation "maven.modrinth:AANobbMI:UddlN6L4"
-    // Xaero's World Map+fabric-1.21.11-1.41.2
-	modImplementation "maven.modrinth:NcUtCpym:1rgcnGza"
-    // Xaero's Minimap+fabric-1.21.11-26.1.4
-	modImplementation "maven.modrinth:1bokaNcj:rLF2AwoN"
-    // Voxy+0.2.16-beta
-	modImplementation "maven.modrinth:fxxUqruK:H3w2nVdU"
-    // Voxy worldgen+2.2.4
-	modImplementation "maven.modrinth:xT0lnNE9:68QZfMFI"
+    // sodium+mc26.2-0.9.1-beta.3-fabric
+	implementation "maven.modrinth:AANobbMI:jvfEutyx"
+    // Xaero's World Map+fabric-26.2-1.41.3
+	implementation "maven.modrinth:NcUtCpym:5OKukukw"
+    // Xaero's Minimap+fabric-26.2-26.1.3
+	implementation "maven.modrinth:1bokaNcj:e1D3Ei69"
+    // Voxy+0.2.17-alpha
+	implementation "maven.modrinth:fxxUqruK:hUUcusfA"
+    // Voxy worldgen+2.4.2
+	implementation "maven.modrinth:xT0lnNE9:II0QK5sq"
 }
 
 processResources {

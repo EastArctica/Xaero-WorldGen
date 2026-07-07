@@ -51,13 +51,13 @@ public final class BridgeChunkSnapshotStore {
         if (world == null || chunkPos == null || snapshotNbt == null) {
             return;
         }
-        if (!BridgeSourcePolicy.allowsBridgeDataPipeline(world, chunkPos.x >> 5, chunkPos.z >> 5)) {
+        if (!BridgeSourcePolicy.allowsBridgeDataPipeline(world, chunkPos.x() >> 5, chunkPos.z() >> 5)) {
             return;
         }
 
-        RegionSnapshotState state = regionState(world, chunkPos.x >> 5, chunkPos.z >> 5);
+        RegionSnapshotState state = regionState(world, chunkPos.x() >> 5, chunkPos.z() >> 5);
         long now = System.currentTimeMillis();
-        int localIndex = localChunkIndex(chunkPos.x, chunkPos.z);
+        int localIndex = localChunkIndex(chunkPos.x(), chunkPos.z());
         synchronized (state) {
             state.liveChunkNbt[localIndex] = snapshotNbt.copy();
             state.liveCoverage.set(localIndex);
@@ -150,14 +150,14 @@ public final class BridgeChunkSnapshotStore {
         if (world == null || chunkPos == null) {
             return null;
         }
-        if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x, chunkPos.z)) {
+        if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x(), chunkPos.z())) {
             return null;
         }
-        if (!BridgeRegionReleaseManager.hasCurrentCommittedDirtyVersion(world, chunkPos.x >> 5, chunkPos.z >> 5)) {
+        if (!BridgeRegionReleaseManager.hasCurrentCommittedDirtyVersion(world, chunkPos.x() >> 5, chunkPos.z() >> 5)) {
             return null;
         }
 
-        RegionSnapshotState state = REGION_SNAPSHOTS.get(regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5));
+        RegionSnapshotState state = REGION_SNAPSHOTS.get(regionKey(world, chunkPos.x() >> 5, chunkPos.z() >> 5));
         if (state == null) {
             return null;
         }
@@ -166,7 +166,7 @@ public final class BridgeChunkSnapshotStore {
             if (state.committedChunkNbt == null) {
                 return null;
             }
-            CompoundTag committed = state.committedChunkNbt[localChunkIndex(chunkPos.x, chunkPos.z)];
+            CompoundTag committed = state.committedChunkNbt[localChunkIndex(chunkPos.x(), chunkPos.z())];
             return committed == null ? null : committed.copy();
         }
     }

@@ -31,7 +31,7 @@ public final class BridgeFallbackMissTracker {
         }
 
         long now = System.currentTimeMillis();
-        String key = regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5);
+        String key = regionKey(world, chunkPos.x() >> 5, chunkPos.z() >> 5);
         TooFewState state = TOO_FEW_MISS.computeIfAbsent(key, ignored -> new TooFewState());
         synchronized (state) {
             if (state.lastMissEpoch <= 0L || now - state.lastMissEpoch > TOO_FEW_WINDOW_MILLIS) {

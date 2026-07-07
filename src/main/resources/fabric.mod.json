@@ -21,10 +21,10 @@
   ],
   "depends": {
     "fabricloader": ">=0.18.4",
-    "minecraft": "~1.21.11",
+    "minecraft": "~26.2",
     "java": ">=21",
     "fabric-api": "*",
-    "xaeroworldmap": ">=1.40.16",
+    "xaeroworldmap": ">=1.41.3",
     "voxy": "*",
     "voxyworldgenv2": "*"
   }

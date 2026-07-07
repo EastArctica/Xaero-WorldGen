@@ -57,12 +57,12 @@ public final class VoxyChunkNbtProvider {
             return committedSnapshot;
         }
 
-        int regionX = chunkPos.x >> 5;
-        int regionZ = chunkPos.z >> 5;
+        int regionX = chunkPos.x() >> 5;
+        int regionZ = chunkPos.z() >> 5;
         BridgeSourcePolicy.SourcePolicy sourcePolicy = BridgeSourcePolicy.classify(world, regionX, regionZ);
         if (sourcePolicy == BridgeSourcePolicy.SourcePolicy.VANILLA_ONLY
             && BridgePerfBudget.VANILLA_MISSING_CHUNK_FALLBACK
-            && BridgeSourcePolicy.isVanillaChunkHeaderMissing(world, chunkPos.x, chunkPos.z)) {
+            && BridgeSourcePolicy.isVanillaChunkHeaderMissing(world, chunkPos.x(), chunkPos.z())) {
             return attemptVanillaMissingChunkLiveFallback(world, chunkPos);
         }
 
@@ -86,7 +86,7 @@ public final class VoxyChunkNbtProvider {
         if (liveChunkNbt != null) {
             VANILLA_LIVE_RETRY_AFTER.remove(retryKey);
             recordAttempt(chunkPos, true, "vanilla_missing_chunk_live_hit", completeness);
-            BridgeFallbackEscalationPolicy.onFallbackAttemptResult(world, chunkPos.x, chunkPos.z, true);
+            BridgeFallbackEscalationPolicy.onFallbackAttemptResult(world, chunkPos.x(), chunkPos.z(), true);
             return liveChunkNbt;
         }
 
@@ -95,7 +95,7 @@ public final class VoxyChunkNbtProvider {
             ? "vanilla_missing_chunk_live_miss"
             : "vanilla_missing_chunk_live_" + completeness.reason();
         recordAttempt(chunkPos, false, reason, completeness);
-        BridgeFallbackEscalationPolicy.onFallbackAttemptResult(world, chunkPos.x, chunkPos.z, false);
+        BridgeFallbackEscalationPolicy.onFallbackAttemptResult(world, chunkPos.x(), chunkPos.z(), false);
         return null;
     }
 
@@ -125,8 +125,8 @@ public final class VoxyChunkNbtProvider {
         int bottomY = world.getMinY();
         int minSectionY = Math.floorDiv(bottomY, 16);
         int sectionCount = (world.getHeight() + 15) / 16;
-        int localChunkXOffset = Math.floorMod(chunkPos.x, 2) * 16;
-        int localChunkZOffset = Math.floorMod(chunkPos.z, 2) * 16;
+        int localChunkXOffset = Math.floorMod(chunkPos.x(), 2) * 16;
+        int localChunkZOffset = Math.floorMod(chunkPos.z(), 2) * 16;
         int[] topPlusOne = new int[256];
         Arrays.fill(topPlusOne, bottomY);
         ListTag sections = new ListTag();
@@ -157,8 +157,8 @@ public final class VoxyChunkNbtProvider {
 
         CompoundTag chunkNbt = new CompoundTag();
         String statusId = ChunkStatus.FULL.getName();
-        chunkNbt.putInt("xPos", chunkPos.x);
-        chunkNbt.putInt("zPos", chunkPos.z);
+        chunkNbt.putInt("xPos", chunkPos.x());
+        chunkNbt.putInt("zPos", chunkPos.z());
         chunkNbt.putString("Status", statusId);
         chunkNbt.putString("target_status", statusId);
         chunkNbt.putInt("yPos", minSectionY);
@@ -214,8 +214,8 @@ public final class VoxyChunkNbtProvider {
         LAST_ATTEMPT_REPORT.set(
             new FallbackAttemptReport(
                 hit,
-                chunkPos.x,
-                chunkPos.z,
+                chunkPos.x(),
+                chunkPos.z(),
                 reason == null || reason.isBlank() ? "unknown" : reason,
                 presentSections,
                 nonAirBlocks,
@@ -235,9 +235,9 @@ public final class VoxyChunkNbtProvider {
     }
 
     private long[] getSectionData(WorldEngine engine, ChunkPos chunkPos, int sectionY) {
-        int worldSectionX = Math.floorDiv(chunkPos.x, 2);
+        int worldSectionX = Math.floorDiv(chunkPos.x(), 2);
         int worldSectionY = Math.floorDiv(sectionY, 2);
-        int worldSectionZ = Math.floorDiv(chunkPos.z, 2);
+        int worldSectionZ = Math.floorDiv(chunkPos.z(), 2);
         WorldSection worldSection = engine.acquireIfExists(0, worldSectionX, worldSectionY, worldSectionZ);
         if (worldSection == null) {
             return null;
@@ -441,7 +441,7 @@ public final class VoxyChunkNbtProvider {
     }
 
     private String fallbackRetryKey(ServerLevel world, ChunkPos chunkPos) {
-        return BridgePaths.getRuntimeCacheKey(world) + "|" + chunkPos.x + "|" + chunkPos.z;
+        return BridgePaths.getRuntimeCacheKey(world) + "|" + chunkPos.x() + "|" + chunkPos.z();
     }
 
     private int getBlockIndex(int localX, int localY, int localZ) {

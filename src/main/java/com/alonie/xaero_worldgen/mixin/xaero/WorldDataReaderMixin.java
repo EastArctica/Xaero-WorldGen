@@ -97,8 +97,8 @@ public abstract class WorldDataReaderMixin {
                 BridgeBuildQualityTracker.recordVanillaHit(world, chunkPos);
                 BridgeXaeroLoadedChunkTracker.markLoadedChunk(
                     world,
-                    chunkPos.x,
-                    chunkPos.z,
+                    chunkPos.x(),
+                    chunkPos.z(),
                     BridgeXaeroLoadedChunkTracker.SourceKind.VANILLA_HIT
                 );
             }
@@ -109,7 +109,7 @@ public abstract class WorldDataReaderMixin {
             return;
         }
 
-        if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x, chunkPos.z)) {
+        if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x(), chunkPos.z())) {
             return;
         }
 
@@ -118,8 +118,8 @@ public abstract class WorldDataReaderMixin {
             BridgeBuildQualityTracker.recordFallbackResult(world, chunkPos, true, hasCoordinateMismatch(chunkPos, replacement));
             BridgeXaeroLoadedChunkTracker.markLoadedChunk(
                 world,
-                chunkPos.x,
-                chunkPos.z,
+                chunkPos.x(),
+                chunkPos.z(),
                 BridgeXaeroLoadedChunkTracker.SourceKind.FALLBACK_HIT
             );
             cir.setReturnValue(replacement);
@@ -152,14 +152,14 @@ public abstract class WorldDataReaderMixin {
                         BridgeBuildQualityTracker.recordVanillaHit(world, chunkPos);
                         BridgeXaeroLoadedChunkTracker.markLoadedChunk(
                             world,
-                            chunkPos.x,
-                            chunkPos.z,
+                            chunkPos.x(),
+                            chunkPos.z(),
                             BridgeXaeroLoadedChunkTracker.SourceKind.VANILLA_HIT
                         );
                         return optional;
                     }
 
-                    if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x, chunkPos.z)) {
+                    if (!BridgeSourcePolicy.allowsBridgeFallback(world, chunkPos.x(), chunkPos.z())) {
                         return optional == null ? Optional.empty() : optional;
                     }
 
@@ -168,8 +168,8 @@ public abstract class WorldDataReaderMixin {
                         BridgeBuildQualityTracker.recordFallbackResult(world, chunkPos, true, hasCoordinateMismatch(chunkPos, replacement));
                         BridgeXaeroLoadedChunkTracker.markLoadedChunk(
                             world,
-                            chunkPos.x,
-                            chunkPos.z,
+                            chunkPos.x(),
+                            chunkPos.z(),
                             BridgeXaeroLoadedChunkTracker.SourceKind.FALLBACK_HIT
                         );
                     } else {
@@ -184,7 +184,7 @@ public abstract class WorldDataReaderMixin {
     private static boolean hasCoordinateMismatch(ChunkPos chunkPos, CompoundTag nbt) {
         int xPos = readChunkCoordinate(nbt, "xPos");
         int zPos = readChunkCoordinate(nbt, "zPos");
-        return xPos != chunkPos.x || zPos != chunkPos.z;
+        return xPos != chunkPos.x() || zPos != chunkPos.z();
     }
 
     private static int readChunkCoordinate(CompoundTag nbt, String key) {

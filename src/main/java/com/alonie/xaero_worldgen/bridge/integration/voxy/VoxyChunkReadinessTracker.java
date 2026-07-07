@@ -62,7 +62,7 @@ public final class VoxyChunkReadinessTracker {
     }
 
     public static Snapshot snapshot(ServerLevel world, ChunkPos chunkPos) {
-        ChunkState state = CHUNK_STATES.get(chunkKey(world, chunkPos.x, chunkPos.z));
+        ChunkState state = CHUNK_STATES.get(chunkKey(world, chunkPos.x(), chunkPos.z()));
         if (state == null) {
             return Snapshot.EMPTY;
         }
@@ -116,8 +116,8 @@ public final class VoxyChunkReadinessTracker {
         }
 
         Completeness completeness = new Completeness(
-            chunkPos.x,
-            chunkPos.z,
+            chunkPos.x(),
+            chunkPos.z(),
             presentSections,
             nonAirBlocks,
             highestNonAirY,
@@ -130,12 +130,12 @@ public final class VoxyChunkReadinessTracker {
             ready,
             reason
         );
-        LAST_COMPLETENESS.put(chunkKey(world, chunkPos.x, chunkPos.z), completeness);
+        LAST_COMPLETENESS.put(chunkKey(world, chunkPos.x(), chunkPos.z()), completeness);
         return completeness;
     }
 
     public static Completeness getLastCompleteness(ServerLevel world, ChunkPos chunkPos) {
-        return LAST_COMPLETENESS.get(chunkKey(world, chunkPos.x, chunkPos.z));
+        return LAST_COMPLETENESS.get(chunkKey(world, chunkPos.x(), chunkPos.z()));
     }
 
     public static void clearRuntimeState() {

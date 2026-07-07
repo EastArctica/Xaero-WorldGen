@@ -121,8 +121,8 @@ public final class XaeroLiveRegionQueue {
             return;
         }
 
-        int playerRegionX = client.player.chunkPosition().x >> 5;
-        int playerRegionZ = client.player.chunkPosition().z >> 5;
+        int playerRegionX = client.player.chunkPosition().x() >> 5;
+        int playerRegionZ = client.player.chunkPosition().z() >> 5;
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(serverWorld);
         syncDirtyReplay(serverWorld, runtimeCacheKey);
         if (PENDING.isEmpty()) {

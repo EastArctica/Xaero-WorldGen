@@ -644,7 +644,7 @@ public final class BridgeRegionAuditService {
         ArrayList<int[]> players = new ArrayList<>();
         for (ServerPlayer player : world.players()) {
             ChunkPos chunkPos = player.chunkPosition();
-            players.add(new int[] {chunkPos.x >> 5, chunkPos.z >> 5});
+            players.add(new int[] {chunkPos.x() >> 5, chunkPos.z() >> 5});
         }
         return players;
     }
