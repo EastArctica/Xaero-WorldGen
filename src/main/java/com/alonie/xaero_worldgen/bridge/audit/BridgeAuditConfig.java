@@ -190,7 +190,7 @@ public final class BridgeAuditConfig {
         public static Config defaults() {
             return new Config(
                 true,
-                true,
+                false,
                 40,
                 2,
                 2,
