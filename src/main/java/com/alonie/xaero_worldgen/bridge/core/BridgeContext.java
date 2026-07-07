@@ -9,19 +9,19 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 public final class BridgeContext {
-    private static final ThreadLocal<ServerWorld> CURRENT_WORLD = new ThreadLocal<>();
+    private static final ThreadLocal<ServerLevel> CURRENT_WORLD = new ThreadLocal<>();
 
     private BridgeContext() {
     }
 
-    public static void setCurrentWorld(ServerWorld world) {
+    public static void setCurrentWorld(ServerLevel world) {
         CURRENT_WORLD.set(world);
     }
 
-    public static ServerWorld getCurrentWorld() {
+    public static ServerLevel getCurrentWorld() {
         return CURRENT_WORLD.get();
     }
 

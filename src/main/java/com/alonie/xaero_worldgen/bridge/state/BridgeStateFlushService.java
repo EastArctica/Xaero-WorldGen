@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -25,19 +25,19 @@ public final class BridgeStateFlushService {
     private BridgeStateFlushService() {
     }
 
-    public static void markDirtyRuntime(ServerWorld world) {
+    public static void markDirtyRuntime(ServerLevel world) {
         FlushRequest request = requestFor(world);
         request.dirtyPending = true;
         request.lastRequestMillis = System.currentTimeMillis();
     }
 
-    public static void markKnownRegionRuntime(ServerWorld world) {
+    public static void markKnownRegionRuntime(ServerLevel world) {
         FlushRequest request = requestFor(world);
         request.knownPending = true;
         request.lastRequestMillis = System.currentTimeMillis();
     }
 
-    public static void requestFlush(ServerWorld world) {
+    public static void requestFlush(ServerLevel world) {
         FlushRequest request = requestFor(world);
         request.lastRequestMillis = System.currentTimeMillis();
     }
@@ -47,7 +47,7 @@ public final class BridgeStateFlushService {
         ArrayList<Map.Entry<String, FlushRequest>> snapshot = new ArrayList<>(PENDING.entrySet());
         for (Map.Entry<String, FlushRequest> entry : snapshot) {
             FlushRequest request = entry.getValue();
-            ServerWorld world = request.worldRef.get();
+            ServerLevel world = request.worldRef.get();
             if (world == null || world.getServer() != server) {
                 if (world == null) {
                     PENDING.remove(entry.getKey(), request);
@@ -75,7 +75,7 @@ public final class BridgeStateFlushService {
         ArrayList<Map.Entry<String, FlushRequest>> snapshot = new ArrayList<>(PENDING.entrySet());
         for (Map.Entry<String, FlushRequest> entry : snapshot) {
             FlushRequest request = entry.getValue();
-            ServerWorld world = request.worldRef.get();
+            ServerLevel world = request.worldRef.get();
             if (world == null || world.getServer() != server) {
                 continue;
             }
@@ -83,7 +83,7 @@ public final class BridgeStateFlushService {
         }
     }
 
-    public static void flushNow(ServerWorld world) {
+    public static void flushNow(ServerLevel world) {
         FlushRequest request = PENDING.get(BridgePaths.getRuntimeCacheKey(world));
         if (request == null) {
             return;
@@ -96,7 +96,7 @@ public final class BridgeStateFlushService {
         PENDING.clear();
     }
 
-    private static FlushRequest requestFor(ServerWorld world) {
+    private static FlushRequest requestFor(ServerLevel world) {
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(world);
         return PENDING.compute(runtimeCacheKey, (ignored, existing) -> {
             if (existing == null) {
@@ -108,7 +108,7 @@ public final class BridgeStateFlushService {
         });
     }
 
-    private static void flushRequest(String key, FlushRequest request, ServerWorld world, long now) {
+    private static void flushRequest(String key, FlushRequest request, ServerLevel world, long now) {
         boolean dirtyDone = !request.dirtyPending || BridgeDirtyRegionStore.flushWorld(world);
         boolean knownDone = !request.knownPending || VoxyGeneratedRegionIndex.flushWorld(world);
 
@@ -129,13 +129,13 @@ public final class BridgeStateFlushService {
     }
 
     private static final class FlushRequest {
-        private WeakReference<ServerWorld> worldRef;
+        private WeakReference<ServerLevel> worldRef;
         private volatile boolean dirtyPending;
         private volatile boolean knownPending;
         private volatile long lastRequestMillis;
         private volatile long lastFlushMillis;
 
-        private FlushRequest(WeakReference<ServerWorld> worldRef, long now) {
+        private FlushRequest(WeakReference<ServerLevel> worldRef, long now) {
             this.worldRef = worldRef;
             this.lastRequestMillis = now;
             this.lastFlushMillis = now;

@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -102,10 +102,10 @@ public final class BridgeFallbackEscalationPolicy {
     }
 
     public static FallbackDecision evaluateVanillaGapFallback(
-        ServerWorld world,
-        int chunkX,
-        int chunkZ,
-        boolean vanillaChunkMissing
+            ServerLevel world,
+            int chunkX,
+            int chunkZ,
+            boolean vanillaChunkMissing
     ) {
         if (world == null) {
             return FallbackDecision.blocked("world_null");
@@ -238,10 +238,10 @@ public final class BridgeFallbackEscalationPolicy {
     }
 
     public static void onAssistLeaseTerminal(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        BridgeLoadLeaseTracker.TerminalState terminalState
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            BridgeLoadLeaseTracker.TerminalState terminalState
     ) {
         if (world == null || terminalState == null) {
             return;
@@ -271,7 +271,7 @@ public final class BridgeFallbackEscalationPolicy {
         }
     }
 
-    public static void onFallbackAttemptResult(ServerWorld world, int chunkX, int chunkZ, boolean hit) {
+    public static void onFallbackAttemptResult(ServerLevel world, int chunkX, int chunkZ, boolean hit) {
         if (world == null) {
             return;
         }
@@ -296,7 +296,7 @@ public final class BridgeFallbackEscalationPolicy {
         }
     }
 
-    public static boolean isFallbackGapCandidate(ServerWorld world, int regionX, int regionZ) {
+    public static boolean isFallbackGapCandidate(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return false;
         }
@@ -348,11 +348,11 @@ public final class BridgeFallbackEscalationPolicy {
         }
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 
-    private static String chunkKey(ServerWorld world, int chunkX, int chunkZ) {
+    private static String chunkKey(ServerLevel world, int chunkX, int chunkZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + chunkX + "|" + chunkZ;
     }
 

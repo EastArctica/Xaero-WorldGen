@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.nio.file.Files;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,7 +23,7 @@ public final class BridgeSourcePolicy {
     private BridgeSourcePolicy() {
     }
 
-    public static SourcePolicy classify(ServerWorld world, int regionX, int regionZ) {
+    public static SourcePolicy classify(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return SourcePolicy.NO_SOURCE;
         }
@@ -33,7 +33,7 @@ public final class BridgeSourcePolicy {
         return policy;
     }
 
-    public static boolean allowsBridgeFallback(ServerWorld world, int chunkX, int chunkZ) {
+    public static boolean allowsBridgeFallback(ServerLevel world, int chunkX, int chunkZ) {
         if (world == null) {
             return false;
         }
@@ -134,7 +134,7 @@ public final class BridgeSourcePolicy {
         return false;
     }
 
-    public static boolean isVanillaChunkHeaderMissing(ServerWorld world, int chunkX, int chunkZ) {
+    public static boolean isVanillaChunkHeaderMissing(ServerLevel world, int chunkX, int chunkZ) {
         if (world == null) {
             return false;
         }
@@ -158,16 +158,16 @@ public final class BridgeSourcePolicy {
         );
     }
 
-    public static boolean allowsBridgeDataPipeline(ServerWorld world, int regionX, int regionZ) {
+    public static boolean allowsBridgeDataPipeline(ServerLevel world, int regionX, int regionZ) {
         return classify(world, regionX, regionZ) != SourcePolicy.VANILLA_ONLY;
     }
 
-    public static boolean allowsVanillaAssistLoad(ServerWorld world, int regionX, int regionZ) {
+    public static boolean allowsVanillaAssistLoad(ServerLevel world, int regionX, int regionZ) {
         SourcePolicy policy = classify(world, regionX, regionZ);
         return policy == SourcePolicy.VANILLA_ONLY || policy == SourcePolicy.BRIDGE_ONLY;
     }
 
-    public static void recordQueueDrop(ServerWorld world, int regionX, int regionZ, String reason) {
+    public static void recordQueueDrop(ServerLevel world, int regionX, int regionZ, String reason) {
         if (world == null) {
             return;
         }
@@ -181,7 +181,7 @@ public final class BridgeSourcePolicy {
         );
     }
 
-    public static void recordMixedSourceGuardHit(ServerWorld world, int regionX, int regionZ, String reason) {
+    public static void recordMixedSourceGuardHit(ServerLevel world, int regionX, int regionZ, String reason) {
         if (world == null) {
             return;
         }
@@ -202,16 +202,16 @@ public final class BridgeSourcePolicy {
     }
 
     @Deprecated
-    public static boolean allowsFallback(ServerWorld world, int chunkX, int chunkZ) {
+    public static boolean allowsFallback(ServerLevel world, int chunkX, int chunkZ) {
         return allowsBridgeFallback(world, chunkX, chunkZ);
     }
 
     @Deprecated
-    public static boolean allowsBridgeQueue(ServerWorld world, int regionX, int regionZ) {
+    public static boolean allowsBridgeQueue(ServerLevel world, int regionX, int regionZ) {
         return allowsBridgeDataPipeline(world, regionX, regionZ);
     }
 
-    private static SourcePolicy computePolicy(ServerWorld world, int regionX, int regionZ) {
+    private static SourcePolicy computePolicy(ServerLevel world, int regionX, int regionZ) {
         if (Files.isRegularFile(BridgePaths.getRegionFile(world, regionX, regionZ))) {
             return SourcePolicy.VANILLA_ONLY;
         }
@@ -223,7 +223,7 @@ public final class BridgeSourcePolicy {
         return SourcePolicy.NO_SOURCE;
     }
 
-    private static void emitPolicyIfChanged(ServerWorld world, int regionX, int regionZ, SourcePolicy policy) {
+    private static void emitPolicyIfChanged(ServerLevel world, int regionX, int regionZ, SourcePolicy policy) {
         String key = regionKey(world, regionX, regionZ);
         SourcePolicy previous = LAST_POLICY.put(key, policy);
         if (previous == policy) {
@@ -242,7 +242,7 @@ public final class BridgeSourcePolicy {
         VwgXwmBridgeClient.LOGGER.info(
             "[VWG->XWM Bridge][Trace] phase=SOURCE_POLICY result={} dim={} regionX={} regionZ={} regionFileExists={} mcaChunkCount={}",
             policy.id,
-            world.getRegistryKey().getValue(),
+            world.dimension().identifier(),
             regionX,
             regionZ,
             regionFileExists,
@@ -251,7 +251,7 @@ public final class BridgeSourcePolicy {
         VwgXwmBridgeClient.LOGGER.info(
             "[VWG->XWM Bridge][Trace] phase=SOURCE_POLICY_DETAIL result={} dim={} regionX={} regionZ={} regionFileExists={} mcaChunkCount={}",
             policy.id,
-            world.getRegistryKey().getValue(),
+            world.dimension().identifier(),
             regionX,
             regionZ,
             regionFileExists,
@@ -259,7 +259,7 @@ public final class BridgeSourcePolicy {
         );
     }
 
-    private static void emitThrottled(String phase, ServerWorld world, int regionX, int regionZ, String details) {
+    private static void emitThrottled(String phase, ServerLevel world, int regionX, int regionZ, String details) {
         long now = System.currentTimeMillis();
         String key = phase + "|" + regionKey(world, regionX, regionZ);
         long previousEpoch = LAST_EVENT_EPOCH.getOrDefault(key, -1L);
@@ -271,7 +271,7 @@ public final class BridgeSourcePolicy {
         VwgXwmBridgeClient.LOGGER.info(
             "[VWG->XWM Bridge][Trace] phase={} dim={} regionX={} regionZ={} {}",
             phase,
-            world.getRegistryKey().getValue(),
+            world.dimension().identifier(),
             regionX,
             regionZ,
             details
@@ -285,7 +285,7 @@ public final class BridgeSourcePolicy {
         return reason;
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 

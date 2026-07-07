@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +27,7 @@ public final class BridgeMcaHeaderCache {
     private BridgeMcaHeaderCache() {
     }
 
-    public static McaCoverage getCoverage(ServerWorld world, int regionX, int regionZ, long currentTick, int refreshTicks) {
+    public static McaCoverage getCoverage(ServerLevel world, int regionX, int regionZ, long currentTick, int refreshTicks) {
         if (world == null) {
             return McaCoverage.EMPTY;
         }
@@ -40,12 +40,12 @@ public final class BridgeMcaHeaderCache {
     }
 
     public static boolean isChunkPresent(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        int localChunkIndex,
-        long currentTick,
-        int refreshTicks
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            int localChunkIndex,
+            long currentTick,
+            int refreshTicks
     ) {
         if (world == null || localChunkIndex < 0 || localChunkIndex >= REGION_CHUNK_COUNT) {
             return false;
@@ -58,7 +58,7 @@ public final class BridgeMcaHeaderCache {
         return entry.hasChunk(world, regionX, regionZ, localChunkIndex, currentTick, Math.max(1, refreshTicks));
     }
 
-    public static McaCoverage forceRefresh(ServerWorld world, int regionX, int regionZ, long currentTick) {
+    public static McaCoverage forceRefresh(ServerLevel world, int regionX, int regionZ, long currentTick) {
         if (world == null) {
             return McaCoverage.EMPTY;
         }
@@ -102,11 +102,11 @@ public final class BridgeMcaHeaderCache {
         private long fileSize = -1L;
 
         private synchronized McaCoverage coverage(
-            ServerWorld world,
-            int regionX,
-            int regionZ,
-            long currentTick,
-            int refreshTicks
+                ServerLevel world,
+                int regionX,
+                int regionZ,
+                long currentTick,
+                int refreshTicks
         ) {
             if (refreshedAtTick < 0L || currentTick - refreshedAtTick >= refreshTicks) {
                 refresh(world, regionX, regionZ, currentTick);
@@ -121,12 +121,12 @@ public final class BridgeMcaHeaderCache {
         }
 
         private synchronized boolean hasChunk(
-            ServerWorld world,
-            int regionX,
-            int regionZ,
-            int localChunkIndex,
-            long currentTick,
-            int refreshTicks
+                ServerLevel world,
+                int regionX,
+                int regionZ,
+                int localChunkIndex,
+                long currentTick,
+                int refreshTicks
         ) {
             if (refreshedAtTick < 0L || currentTick - refreshedAtTick >= refreshTicks) {
                 refresh(world, regionX, regionZ, currentTick);
@@ -140,7 +140,7 @@ public final class BridgeMcaHeaderCache {
             this.refreshedAtTick = -1L;
         }
 
-        private void refresh(ServerWorld world, int regionX, int regionZ, long currentTick) {
+        private void refresh(ServerLevel world, int regionX, int regionZ, long currentTick) {
             Path regionFile = BridgePaths.getRegionFile(world, regionX, regionZ);
             if (!Files.isRegularFile(regionFile)) {
                 Arrays.fill(words, 0L);

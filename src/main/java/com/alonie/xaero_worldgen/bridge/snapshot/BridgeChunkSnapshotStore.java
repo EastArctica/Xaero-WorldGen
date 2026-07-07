@@ -9,10 +9,10 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 
 import java.util.Arrays;
 import java.util.BitSet;
@@ -27,8 +27,8 @@ public final class BridgeChunkSnapshotStore {
     private BridgeChunkSnapshotStore() {
     }
 
-    public static boolean captureLiveChunk(World world, int chunkX, int chunkZ) {
-        if (!(world instanceof ServerWorld serverWorld)) {
+    public static boolean captureLiveChunk(Level world, int chunkX, int chunkZ) {
+        if (!(world instanceof ServerLevel serverWorld)) {
             return false;
         }
         if (!BridgeSourcePolicy.allowsBridgeDataPipeline(serverWorld, chunkX >> 5, chunkZ >> 5)) {
@@ -36,7 +36,7 @@ public final class BridgeChunkSnapshotStore {
         }
 
         ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
-        NbtCompound snapshot = VoxyChunkNbtProvider.INSTANCE.createLiveChunkNbt(serverWorld, chunkPos);
+        CompoundTag snapshot = VoxyChunkNbtProvider.INSTANCE.createLiveChunkNbt(serverWorld, chunkPos);
         if (snapshot == null) {
             return false;
         }
@@ -47,7 +47,7 @@ public final class BridgeChunkSnapshotStore {
         return true;
     }
 
-    public static void captureLiveChunkNbt(ServerWorld world, ChunkPos chunkPos, NbtCompound snapshotNbt, long dirtyVersion) {
+    public static void captureLiveChunkNbt(ServerLevel world, ChunkPos chunkPos, CompoundTag snapshotNbt, long dirtyVersion) {
         if (world == null || chunkPos == null || snapshotNbt == null) {
             return;
         }
@@ -68,7 +68,7 @@ public final class BridgeChunkSnapshotStore {
         }
     }
 
-    public static boolean tryCommitRegion(ServerWorld world, int regionX, int regionZ) {
+    public static boolean tryCommitRegion(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return false;
         }
@@ -114,7 +114,7 @@ public final class BridgeChunkSnapshotStore {
         return true;
     }
 
-    public static boolean commitHydratedRegion(ServerWorld world, int regionX, int regionZ, NbtCompound[] snapshots, long dirtyVersion) {
+    public static boolean commitHydratedRegion(ServerLevel world, int regionX, int regionZ, CompoundTag[] snapshots, long dirtyVersion) {
         if (world == null || snapshots == null || snapshots.length != REGION_CHUNK_COUNT || dirtyVersion <= 0L) {
             return false;
         }
@@ -146,7 +146,7 @@ public final class BridgeChunkSnapshotStore {
         return true;
     }
 
-    public static NbtCompound getCommittedChunkNbt(ServerWorld world, ChunkPos chunkPos) {
+    public static CompoundTag getCommittedChunkNbt(ServerLevel world, ChunkPos chunkPos) {
         if (world == null || chunkPos == null) {
             return null;
         }
@@ -166,12 +166,12 @@ public final class BridgeChunkSnapshotStore {
             if (state.committedChunkNbt == null) {
                 return null;
             }
-            NbtCompound committed = state.committedChunkNbt[localChunkIndex(chunkPos.x, chunkPos.z)];
+            CompoundTag committed = state.committedChunkNbt[localChunkIndex(chunkPos.x, chunkPos.z)];
             return committed == null ? null : committed.copy();
         }
     }
 
-    public static CommitState getCommitState(ServerWorld world, int regionX, int regionZ) {
+    public static CommitState getCommitState(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return CommitState.EMPTY;
         }
@@ -203,11 +203,11 @@ public final class BridgeChunkSnapshotStore {
         REGION_SNAPSHOTS.clear();
     }
 
-    private static RegionSnapshotState regionState(ServerWorld world, int regionX, int regionZ) {
+    private static RegionSnapshotState regionState(ServerLevel world, int regionX, int regionZ) {
         return REGION_SNAPSHOTS.computeIfAbsent(regionKey(world, regionX, regionZ), ignored -> new RegionSnapshotState());
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 
@@ -215,8 +215,8 @@ public final class BridgeChunkSnapshotStore {
         return (chunkX & 31) | ((chunkZ & 31) << 5);
     }
 
-    private static boolean allChunksPresent(NbtCompound[] chunks) {
-        for (NbtCompound chunk : chunks) {
+    private static boolean allChunksPresent(CompoundTag[] chunks) {
+        for (CompoundTag chunk : chunks) {
             if (chunk == null) {
                 return false;
             }
@@ -224,8 +224,8 @@ public final class BridgeChunkSnapshotStore {
         return true;
     }
 
-    private static NbtCompound[] copyChunks(NbtCompound[] source) {
-        NbtCompound[] copy = new NbtCompound[source.length];
+    private static CompoundTag[] copyChunks(CompoundTag[] source) {
+        CompoundTag[] copy = new CompoundTag[source.length];
         for (int i = 0; i < source.length; i++) {
             copy[i] = source[i] == null ? null : source[i].copy();
         }
@@ -279,13 +279,13 @@ public final class BridgeChunkSnapshotStore {
     }
 
     private static final class RegionSnapshotState {
-        private final NbtCompound[] liveChunkNbt = new NbtCompound[REGION_CHUNK_COUNT];
+        private final CompoundTag[] liveChunkNbt = new CompoundTag[REGION_CHUNK_COUNT];
         private final BitSet liveCoverage = new BitSet(REGION_CHUNK_COUNT);
         private int liveCoverageCount;
         private long liveDirtyVersion = -1L;
         private long liveSnapshotVersion;
         private long lastLiveUpdateEpoch = -1L;
-        private NbtCompound[] committedChunkNbt;
+        private CompoundTag[] committedChunkNbt;
         private int committedCoverageCount;
         private long committedDirtyVersion = -1L;
         private long committedSnapshotVersion = -1L;

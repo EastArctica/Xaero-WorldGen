@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +30,7 @@ public final class BridgeLegacyRegionQuarantine {
     private BridgeLegacyRegionQuarantine() {
     }
 
-    public static void scanAndQuarantine(ServerWorld world) {
+    public static void scanAndQuarantine(ServerLevel world) {
         Set<Long> knownRegions = VoxyGeneratedRegionIndex.snapshotKnownRegions(world);
         if (knownRegions.isEmpty()) {
             return;
@@ -84,7 +84,7 @@ public final class BridgeLegacyRegionQuarantine {
             VwgXwmBridgeClient.LOGGER.info(
                 "[VWG->XWM Bridge] Quarantined {} legacy bridge stub region files for {} (scanned={}, skipped_non_stub={}).",
                 moved,
-                world.getRegistryKey().getValue(),
+                world.dimension().identifier(),
                 scanned,
                 skipped
             );
@@ -120,7 +120,7 @@ public final class BridgeLegacyRegionQuarantine {
         }
     }
 
-    private static Path resolveQuarantineDestination(ServerWorld world, int regionX, int regionZ) {
+    private static Path resolveQuarantineDestination(ServerLevel world, int regionX, int regionZ) {
         Path quarantineDirectory = BridgePaths.getQuarantineDirectory(world);
         String baseName = "r." + regionX + "." + regionZ + ".mca";
         Path destination = quarantineDirectory.resolve(baseName);
@@ -138,7 +138,7 @@ public final class BridgeLegacyRegionQuarantine {
         }
     }
 
-    private static void appendManifest(ServerWorld world, ArrayList<String> manifestLines) {
+    private static void appendManifest(ServerLevel world, ArrayList<String> manifestLines) {
         if (manifestLines.isEmpty()) {
             return;
         }

@@ -9,15 +9,15 @@ import com.alonie.xaero_worldgen.bridge.policy.BridgeSourcePolicy;
 import com.alonie.xaero_worldgen.bridge.state.BridgeXaeroLoadedChunkTracker;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.VoxyChunkNbtProvider;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.XaeroLiveRegionQueue;
-import net.minecraft.block.Block;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerChunkLoadingManager;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.storage.RegionFile;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.Registry;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.server.level.ChunkMap;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.storage.RegionFile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,19 +35,19 @@ import java.util.concurrent.CompletableFuture;
 @Mixin(WorldDataReader.class)
 public abstract class WorldDataReaderMixin {
     @Shadow
-    private CompletableFuture<Optional<NbtCompound>>[] chunkNBTCompounds;
+    private CompletableFuture<Optional<CompoundTag>>[] chunkNBTCompounds;
 
     @Inject(method = "buildRegion", at = @At("HEAD"))
     private void vwgxwm$pushWorldContext(
-        MapRegion region,
-        ServerWorld world,
-        RegistryWrapper<Block> blockLookup,
-        Registry<Block> blockRegistry,
-        Registry<Fluid> fluidRegistry,
-        boolean caves,
-        int[] heightLimits,
-        Executor executor,
-        CallbackInfoReturnable<Boolean> cir
+            MapRegion region,
+            ServerLevel world,
+            HolderLookup<Block> blockLookup,
+            Registry<Block> blockRegistry,
+            Registry<Fluid> fluidRegistry,
+            boolean caves,
+            int[] heightLimits,
+            Executor executor,
+            CallbackInfoReturnable<Boolean> cir
     ) {
         BridgeContext.setCurrentWorld(world);
         BridgeLoadLeaseTracker.ackBuildStart(world, region.getRegionX(), region.getRegionZ(), XaeroLiveRegionQueue.currentTick());
@@ -58,15 +58,15 @@ public abstract class WorldDataReaderMixin {
 
     @Inject(method = "buildRegion", at = @At("RETURN"))
     private void vwgxwm$clearWorldContext(
-        MapRegion region,
-        ServerWorld world,
-        RegistryWrapper<Block> blockLookup,
-        Registry<Block> blockRegistry,
-        Registry<Fluid> fluidRegistry,
-        boolean caves,
-        int[] heightLimits,
-        Executor executor,
-        CallbackInfoReturnable<Boolean> cir
+            MapRegion region,
+            ServerLevel world,
+            HolderLookup<Block> blockLookup,
+            Registry<Block> blockRegistry,
+            Registry<Fluid> fluidRegistry,
+            boolean caves,
+            int[] heightLimits,
+            Executor executor,
+            CallbackInfoReturnable<Boolean> cir
     ) {
         BridgeRegionAuditService.touchRegion(
             world,
@@ -90,8 +90,8 @@ public abstract class WorldDataReaderMixin {
     }
 
     @Inject(method = "readChunk", at = @At("RETURN"), cancellable = true)
-    private void vwgxwm$injectVoxyChunk(RegionFile regionFile, ChunkPos chunkPos, CallbackInfoReturnable<NbtCompound> cir) {
-        ServerWorld world = BridgeContext.getCurrentWorld();
+    private void vwgxwm$injectVoxyChunk(RegionFile regionFile, ChunkPos chunkPos, CallbackInfoReturnable<CompoundTag> cir) {
+        ServerLevel world = BridgeContext.getCurrentWorld();
         if (cir.getReturnValue() != null) {
             if (world != null) {
                 BridgeBuildQualityTracker.recordVanillaHit(world, chunkPos);
@@ -113,7 +113,7 @@ public abstract class WorldDataReaderMixin {
             return;
         }
 
-        NbtCompound replacement = VoxyChunkNbtProvider.INSTANCE.createChunkNbt(world, chunkPos);
+        CompoundTag replacement = VoxyChunkNbtProvider.INSTANCE.createChunkNbt(world, chunkPos);
         if (replacement != null) {
             BridgeBuildQualityTracker.recordFallbackResult(world, chunkPos, true, hasCoordinateMismatch(chunkPos, replacement));
             BridgeXaeroLoadedChunkTracker.markLoadedChunk(
@@ -130,8 +130,8 @@ public abstract class WorldDataReaderMixin {
     }
 
     @Inject(method = "readChunkNBTCompounds", at = @At("RETURN"))
-    private void vwgxwm$wrapChunkNbtFutures(ServerChunkLoadingManager chunkLoadingManager, MapTileChunk chunk, CallbackInfo ci) {
-        ServerWorld world = BridgeContext.getCurrentWorld();
+    private void vwgxwm$wrapChunkNbtFutures(ChunkMap chunkLoadingManager, MapTileChunk chunk, CallbackInfo ci) {
+        ServerLevel world = BridgeContext.getCurrentWorld();
         if (world == null || chunkNBTCompounds == null) {
             return;
         }
@@ -141,7 +141,7 @@ public abstract class WorldDataReaderMixin {
         for (int localZ = 0; localZ < 4; localZ++) {
             for (int localX = 0; localX < 4; localX++) {
                 int index = (localZ << 2) | localX;
-                CompletableFuture<Optional<NbtCompound>> future = chunkNBTCompounds[index];
+                CompletableFuture<Optional<CompoundTag>> future = chunkNBTCompounds[index];
                 if (future == null) {
                     continue;
                 }
@@ -163,7 +163,7 @@ public abstract class WorldDataReaderMixin {
                         return optional == null ? Optional.empty() : optional;
                     }
 
-                    NbtCompound replacement = VoxyChunkNbtProvider.INSTANCE.createChunkNbt(world, chunkPos);
+                    CompoundTag replacement = VoxyChunkNbtProvider.INSTANCE.createChunkNbt(world, chunkPos);
                     if (replacement != null) {
                         BridgeBuildQualityTracker.recordFallbackResult(world, chunkPos, true, hasCoordinateMismatch(chunkPos, replacement));
                         BridgeXaeroLoadedChunkTracker.markLoadedChunk(
@@ -181,20 +181,20 @@ public abstract class WorldDataReaderMixin {
         }
     }
 
-    private static boolean hasCoordinateMismatch(ChunkPos chunkPos, NbtCompound nbt) {
+    private static boolean hasCoordinateMismatch(ChunkPos chunkPos, CompoundTag nbt) {
         int xPos = readChunkCoordinate(nbt, "xPos");
         int zPos = readChunkCoordinate(nbt, "zPos");
         return xPos != chunkPos.x || zPos != chunkPos.z;
     }
 
-    private static int readChunkCoordinate(NbtCompound nbt, String key) {
-        int rootValue = nbt.getInt(key, Integer.MIN_VALUE);
+    private static int readChunkCoordinate(CompoundTag nbt, String key) {
+        int rootValue = nbt.getIntOr(key, Integer.MIN_VALUE);
         if (rootValue != Integer.MIN_VALUE) {
             return rootValue;
         }
 
         return nbt.getCompound("Level")
-            .map(level -> level.getInt(key, Integer.MIN_VALUE))
+            .map(level -> level.getIntOr(key, Integer.MIN_VALUE))
             .orElse(Integer.MIN_VALUE);
     }
 }

@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -28,22 +28,22 @@ public final class BridgeDirtyRegionStore {
     private BridgeDirtyRegionStore() {
     }
 
-    public static boolean isDirty(ServerWorld world, int regionX, int regionZ) {
+    public static boolean isDirty(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             return state.dirtyRegions.containsKey(packRegion(regionX, regionZ));
         }
     }
 
-    public static boolean markDirty(ServerWorld world, int regionX, int regionZ) {
+    public static boolean markDirty(ServerLevel world, int regionX, int regionZ) {
         return markDirtyDebounced(world, regionX, regionZ, 0L).newlyDirty();
     }
 
     public static DirtyMarkResult markDirtyDebounced(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long debounceWindowMillis
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long debounceWindowMillis
     ) {
         DirtyState state = getState(world);
         DirtyMarkResult result;
@@ -88,10 +88,10 @@ public final class BridgeDirtyRegionStore {
     }
 
     public static DirtyMarkResult touchDirtyWithoutInvalidate(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long debounceWindowMillis
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long debounceWindowMillis
     ) {
         if (world == null) {
             return new DirtyMarkResult(false, false, -1L, -1L);
@@ -115,7 +115,7 @@ public final class BridgeDirtyRegionStore {
         return markDirtyDebounced(world, regionX, regionZ, 0L);
     }
 
-    public static long getDirtyEpoch(ServerWorld world, int regionX, int regionZ) {
+    public static long getDirtyEpoch(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             DirtyRegionState dirtyRegion = state.dirtyRegions.get(packRegion(regionX, regionZ));
@@ -123,7 +123,7 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static long getLastDirtyEpoch(ServerWorld world, int regionX, int regionZ) {
+    public static long getLastDirtyEpoch(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             DirtyRegionState dirtyRegion = state.dirtyRegions.get(packRegion(regionX, regionZ));
@@ -131,7 +131,7 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static long getDirtyVersion(ServerWorld world, int regionX, int regionZ) {
+    public static long getDirtyVersion(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             DirtyRegionState dirtyRegion = state.dirtyRegions.get(packRegion(regionX, regionZ));
@@ -139,14 +139,14 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static long getVersionSeed(ServerWorld world, int regionX, int regionZ) {
+    public static long getVersionSeed(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             return state.getVersionSeed(packRegion(regionX, regionZ));
         }
     }
 
-    public static boolean wasLastDirtyMarkDebounced(ServerWorld world, int regionX, int regionZ) {
+    public static boolean wasLastDirtyMarkDebounced(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         synchronized (state) {
             DirtyRegionState dirtyRegion = state.dirtyRegions.get(packRegion(regionX, regionZ));
@@ -154,7 +154,7 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static ArrayList<DirtyRegion> snapshotDirtyRegions(ServerWorld world) {
+    public static ArrayList<DirtyRegion> snapshotDirtyRegions(ServerLevel world) {
         DirtyState state = getState(world);
         synchronized (state) {
             ArrayList<DirtyRegion> snapshot = new ArrayList<>(state.dirtyRegions.size());
@@ -180,7 +180,7 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static void clearDirty(ServerWorld world, int regionX, int regionZ) {
+    public static void clearDirty(ServerLevel world, int regionX, int regionZ) {
         DirtyState state = getState(world);
         DirtyRegionState removed = null;
         synchronized (state) {
@@ -197,7 +197,7 @@ public final class BridgeDirtyRegionStore {
         }
     }
 
-    public static DirtyClearResult clearDirtyIfVersion(ServerWorld world, int regionX, int regionZ, long expectedDirtyVersion) {
+    public static DirtyClearResult clearDirtyIfVersion(ServerLevel world, int regionX, int regionZ, long expectedDirtyVersion) {
         DirtyState state = getState(world);
         DirtyClearResult clearResult;
         synchronized (state) {
@@ -221,7 +221,7 @@ public final class BridgeDirtyRegionStore {
         return clearResult;
     }
 
-    static boolean flushWorld(ServerWorld world) {
+    static boolean flushWorld(ServerLevel world) {
         DirtyState state = STATES.get(BridgePaths.getRuntimeCacheKey(world));
         if (state == null) {
             return false;
@@ -273,11 +273,11 @@ public final class BridgeDirtyRegionStore {
     public record DirtyMarkResult(boolean newlyDirty, boolean debounced, long dirtyVersion, long lastDirtyEpoch) {
     }
 
-    private static DirtyState getState(ServerWorld world) {
+    private static DirtyState getState(ServerLevel world) {
         return STATES.computeIfAbsent(BridgePaths.getRuntimeCacheKey(world), ignored -> load(world));
     }
 
-    private static DirtyState load(ServerWorld world) {
+    private static DirtyState load(ServerLevel world) {
         DirtyState state = new DirtyState();
         Path dirtyFile = BridgePaths.getDirtyFile(world);
         if (!Files.exists(dirtyFile)) {
@@ -317,14 +317,14 @@ public final class BridgeDirtyRegionStore {
         return state;
     }
 
-    private static void emitDirtyVersionTrace(ServerWorld world, int regionX, int regionZ, String action, long activeVersion) {
+    private static void emitDirtyVersionTrace(ServerLevel world, int regionX, int regionZ, String action, long activeVersion) {
         if (world == null) {
             return;
         }
         long seed = getVersionSeed(world, regionX, regionZ);
         VwgXwmBridgeClient.LOGGER.info(
             "[VWG->XWM Bridge][Trace] phase=DIRTY_VERSION dim={} regionX={} regionZ={} action={} seed={} active={}",
-            world.getRegistryKey().getValue(),
+            world.dimension().identifier(),
             regionX,
             regionZ,
             action == null ? "unknown" : action,
@@ -355,7 +355,7 @@ public final class BridgeDirtyRegionStore {
         return lines;
     }
 
-    private static boolean writeStateToDisk(ServerWorld world, ArrayList<String> lines) {
+    private static boolean writeStateToDisk(ServerLevel world, ArrayList<String> lines) {
         Path dirtyFile = BridgePaths.getDirtyFile(world);
         try {
             Files.createDirectories(dirtyFile.getParent());

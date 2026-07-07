@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -30,7 +30,7 @@ public final class VoxyGeneratedRegionIndex {
     private VoxyGeneratedRegionIndex() {
     }
 
-    public static void bootstrap(ServerWorld world) {
+    public static void bootstrap(ServerLevel world) {
         RegionSetState state = getState(world);
         Path indexFile = BridgePaths.getVoxyGenIndexFile(world);
         if (!Files.exists(indexFile)) {
@@ -69,14 +69,14 @@ public final class VoxyGeneratedRegionIndex {
             VwgXwmBridgeClient.LOGGER.info(
                 "[VWG->XWM Bridge] Bootstrapped {} Voxy-backed Xaero regions for {} (newKnown={}, newDirty={}).",
                 currentRegions.size(),
-                world.getRegistryKey().getValue(),
+                world.dimension().identifier(),
                 additions,
                 dirtyMarked
             );
         }
     }
 
-    public static void registerChunk(ServerWorld world, int chunkX, int chunkZ) {
+    public static void registerChunk(ServerLevel world, int chunkX, int chunkZ) {
         int regionX = chunkX >> 5;
         int regionZ = chunkZ >> 5;
         long packedRegion = BridgeDirtyRegionStore.packRegion(regionX, regionZ);
@@ -95,21 +95,21 @@ public final class VoxyGeneratedRegionIndex {
         }
     }
 
-    public static boolean mayHaveRegion(ServerWorld world, int regionX, int regionZ) {
+    public static boolean mayHaveRegion(ServerLevel world, int regionX, int regionZ) {
         RegionSetState state = getState(world);
         synchronized (state) {
             return state.regions.contains(BridgeDirtyRegionStore.packRegion(regionX, regionZ));
         }
     }
 
-    public static Set<Long> snapshotKnownRegions(ServerWorld world) {
+    public static Set<Long> snapshotKnownRegions(ServerLevel world) {
         RegionSetState state = getState(world);
         synchronized (state) {
             return new HashSet<>(state.regions);
         }
     }
 
-    public static boolean flushWorld(ServerWorld world) {
+    public static boolean flushWorld(ServerLevel world) {
         RegionSetState state = KNOWN_REGIONS.get(BridgePaths.getRuntimeCacheKey(world));
         if (state == null) {
             return false;
@@ -137,11 +137,11 @@ public final class VoxyGeneratedRegionIndex {
         KNOWN_REGIONS.clear();
     }
 
-    private static RegionSetState getState(ServerWorld world) {
+    private static RegionSetState getState(ServerLevel world) {
         return KNOWN_REGIONS.computeIfAbsent(BridgePaths.getRuntimeCacheKey(world), ignored -> loadState(world));
     }
 
-    private static RegionSetState loadState(ServerWorld world) {
+    private static RegionSetState loadState(ServerLevel world) {
         RegionSetState state = new RegionSetState();
         Path knownFile = BridgePaths.getKnownRegionsFile(world);
         if (!Files.exists(knownFile)) {
@@ -216,7 +216,7 @@ public final class VoxyGeneratedRegionIndex {
         return lines;
     }
 
-    private static boolean writeState(ServerWorld world, ArrayList<String> lines) {
+    private static boolean writeState(ServerLevel world, ArrayList<String> lines) {
         Path knownFile = BridgePaths.getKnownRegionsFile(world);
         try {
             Files.createDirectories(knownFile.getParent());

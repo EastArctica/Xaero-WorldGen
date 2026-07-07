@@ -6,11 +6,11 @@ import com.alonie.xaero_worldgen.bridge.audit.BridgeRegionAuditService;
 import com.alonie.xaero_worldgen.bridge.state.BridgeRegionBuildTracker;
 import com.alonie.xaero_worldgen.bridge.policy.BridgeSourcePolicy;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.XaeroLiveRegionQueue;
-import net.minecraft.block.Block;
-import net.minecraft.fluid.Fluid;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.core.Registry;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.server.level.ServerLevel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +23,7 @@ import xaero.map.region.MapRegion;
 public abstract class MapSaveLoadMixin {
     @Inject(method = "saveExists", at = @At("HEAD"), cancellable = true)
     private void vwgxwm$announceVoxyBackedRegion(MapRegion region, CallbackInfoReturnable<Boolean> cir) {
-        ServerWorld world = XaeroBridgeSupport.resolveWorld(region);
+        ServerLevel world = XaeroBridgeSupport.resolveWorld(region);
         if (world == null) {
             return;
         }
@@ -45,16 +45,16 @@ public abstract class MapSaveLoadMixin {
 
     @Inject(method = "loadRegion", at = @At("HEAD"), cancellable = true)
     private void vwgxwm$ensureStubBeforeLoad(
-        MapRegion region,
-        RegistryWrapper<Block> blockLookup,
-        Registry<Block> blockRegistry,
-        Registry<Fluid> fluidRegistry,
-        BiomeGetter biomeGetter,
-        boolean caves,
-        int caveStart,
-        CallbackInfoReturnable<Boolean> cir
+            MapRegion region,
+            HolderLookup<Block> blockLookup,
+            Registry<Block> blockRegistry,
+            Registry<Fluid> fluidRegistry,
+            BiomeGetter biomeGetter,
+            boolean caves,
+            int caveStart,
+            CallbackInfoReturnable<Boolean> cir
     ) {
-        ServerWorld world = XaeroBridgeSupport.resolveWorld(region);
+        ServerLevel world = XaeroBridgeSupport.resolveWorld(region);
         if (world != null) {
             BridgeLoadLeaseTracker.ackLoadStart(
                 world,
@@ -88,16 +88,16 @@ public abstract class MapSaveLoadMixin {
 
     @Inject(method = "loadRegion", at = @At("RETURN"))
     private void vwgxwm$trackLoadRegionResult(
-        MapRegion region,
-        RegistryWrapper<Block> blockLookup,
-        Registry<Block> blockRegistry,
-        Registry<Fluid> fluidRegistry,
-        BiomeGetter biomeGetter,
-        boolean caves,
-        int caveStart,
-        CallbackInfoReturnable<Boolean> cir
+            MapRegion region,
+            HolderLookup<Block> blockLookup,
+            Registry<Block> blockRegistry,
+            Registry<Fluid> fluidRegistry,
+            BiomeGetter biomeGetter,
+            boolean caves,
+            int caveStart,
+            CallbackInfoReturnable<Boolean> cir
     ) {
-        ServerWorld world = XaeroBridgeSupport.resolveWorld(region);
+        ServerLevel world = XaeroBridgeSupport.resolveWorld(region);
         if (world == null) {
             return;
         }

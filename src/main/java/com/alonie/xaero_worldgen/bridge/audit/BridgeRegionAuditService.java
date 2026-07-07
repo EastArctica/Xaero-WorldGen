@@ -11,9 +11,9 @@ import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +39,7 @@ public final class BridgeRegionAuditService {
     private BridgeRegionAuditService() {
     }
 
-    public static void touchRegion(ServerWorld world, int regionX, int regionZ, String reason) {
+    public static void touchRegion(ServerLevel world, int regionX, int regionZ, String reason) {
         if (world == null) {
             return;
         }
@@ -58,21 +58,21 @@ public final class BridgeRegionAuditService {
             return;
         }
 
-        long tick = server.getTicks();
+        long tick = server.getTickCount();
         if (tick <= 0L || tick % config.intervalTicks() != 0L) {
             return;
         }
 
-        for (ServerWorld world : server.getWorlds()) {
+        for (ServerLevel world : server.getAllLevels()) {
             scanWorld(world, tick, config);
         }
     }
 
     public static ArrayList<RepairCandidate> snapshotRepairCandidates(
-        ServerWorld world,
-        int limit,
-        long currentTick,
-        long repairCooldownTicks
+            ServerLevel world,
+            int limit,
+            long currentTick,
+            long repairCooldownTicks
     ) {
         ArrayList<RepairCandidate> candidates = new ArrayList<>();
         if (world == null || limit <= 0) {
@@ -141,7 +141,7 @@ public final class BridgeRegionAuditService {
         return candidates;
     }
 
-    public static void markRepairAttempt(ServerWorld world, int regionX, int regionZ, long currentTick, String reason) {
+    public static void markRepairAttempt(ServerLevel world, int regionX, int regionZ, long currentTick, String reason) {
         if (world == null) {
             return;
         }
@@ -158,7 +158,7 @@ public final class BridgeRegionAuditService {
         LAST_SUMMARY_TICK.clear();
     }
 
-    public static EscalationSignal snapshotEscalationSignal(ServerWorld world, int regionX, int regionZ, long tick) {
+    public static EscalationSignal snapshotEscalationSignal(ServerLevel world, int regionX, int regionZ, long tick) {
         if (world == null) {
             return EscalationSignal.empty();
         }
@@ -242,7 +242,7 @@ public final class BridgeRegionAuditService {
         );
     }
 
-    private static void scanWorld(ServerWorld world, long tick, BridgeAuditConfig.Config config) {
+    private static void scanWorld(ServerLevel world, long tick, BridgeAuditConfig.Config config) {
         long startedNanos = System.nanoTime();
         long timeBudgetNanos = Math.max(100_000L, config.timeBudgetMicros() * 1_000L);
         int maxRegions = Math.max(1, config.maxRegionsPerTick());
@@ -393,7 +393,7 @@ public final class BridgeRegionAuditService {
             LAST_SUMMARY_TICK.put(runtimeKey, tick);
             VwgXwmBridgeClient.LOGGER.info(
                 "[VWG->XWM Bridge][Trace] phase=AUDIT_ROLLUP dim={} result=window processed={} considered={} near_missing_ratio={} far_missing_ratio={} classify={} stalled_top={}",
-                world.getRegistryKey().getValue(),
+                world.dimension().identifier(),
                 processed,
                 considered,
                 ratioText(nearMissing, nearExpected),
@@ -405,13 +405,13 @@ public final class BridgeRegionAuditService {
     }
 
     private static RegionAuditResult auditRegion(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long tick,
-        BridgeAuditConfig.Config config,
-        TouchState touchState,
-        boolean near
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long tick,
+            BridgeAuditConfig.Config config,
+            TouchState touchState,
+            boolean near
     ) {
         BridgeSourcePolicy.SourcePolicy sourcePolicy = BridgeSourcePolicy.classify(world, regionX, regionZ);
         if (sourcePolicy == BridgeSourcePolicy.SourcePolicy.NO_SOURCE) {
@@ -542,7 +542,7 @@ public final class BridgeRegionAuditService {
         return touchState.cacheTouchWindowCount() >= 3 && cacheAge >= 0L && cacheAge <= Math.max(80L, intervalTicks * 4L);
     }
 
-    private static void emitRegionEvent(ServerWorld world, long tick, RegionAuditResult result) {
+    private static void emitRegionEvent(ServerLevel world, long tick, RegionAuditResult result) {
         BridgeAuditLogger.log(
             tick,
             "AUDITV2_REGION",
@@ -597,7 +597,7 @@ public final class BridgeRegionAuditService {
         }
     }
 
-    private static void emitTopEvent(ServerWorld world, long tick, int rank, RegionAuditResult result) {
+    private static void emitTopEvent(ServerLevel world, long tick, int rank, RegionAuditResult result) {
         BridgeAuditLogger.log(
             tick,
             "AUDITV2_TOP",
@@ -640,10 +640,10 @@ public final class BridgeRegionAuditService {
         }
     }
 
-    private static ArrayList<int[]> collectPlayerRegions(ServerWorld world) {
+    private static ArrayList<int[]> collectPlayerRegions(ServerLevel world) {
         ArrayList<int[]> players = new ArrayList<>();
-        for (ServerPlayerEntity player : world.getPlayers()) {
-            ChunkPos chunkPos = player.getChunkPos();
+        for (ServerPlayer player : world.players()) {
+            ChunkPos chunkPos = player.chunkPosition();
             players.add(new int[] {chunkPos.x >> 5, chunkPos.z >> 5});
         }
         return players;
@@ -698,7 +698,7 @@ public final class BridgeRegionAuditService {
         }
     }
 
-    private static void updateGapLedger(ServerWorld world, RegionAuditResult result, long tick, int intervalTicks) {
+    private static void updateGapLedger(ServerLevel world, RegionAuditResult result, long tick, int intervalTicks) {
         String runtimeKey = BridgePaths.getRuntimeCacheKey(world);
         ConcurrentHashMap<Long, GapState> runtimeLedger = GAP_LEDGER.computeIfAbsent(runtimeKey, ignored -> new ConcurrentHashMap<>());
         long packedRegion = BridgeDirtyRegionStore.packRegion(result.regionX(), result.regionZ());
@@ -971,7 +971,7 @@ public final class BridgeRegionAuditService {
             );
         }
 
-        private synchronized void emitDerivedSignals(ServerWorld world, int regionX, int regionZ, long tick) {
+        private synchronized void emitDerivedSignals(ServerLevel world, int regionX, int regionZ, long tick) {
             if (world == null) {
                 return;
             }
@@ -1003,7 +1003,7 @@ public final class BridgeRegionAuditService {
                 );
                 VwgXwmBridgeClient.LOGGER.info(
                     "[VWG->XWM Bridge][Trace] phase=VISIBILITY_GAP dim={} regionX={} regionZ={} windows={} loaded_session={} loaded_visible={} gap_count={} hole_ratio={} classify={}",
-                    world.getRegistryKey().getValue(),
+                    world.dimension().identifier(),
                     regionX,
                     regionZ,
                     consecutiveVisibilityGapWindows,
@@ -1044,7 +1044,7 @@ public final class BridgeRegionAuditService {
                 );
                 VwgXwmBridgeClient.LOGGER.info(
                     "[VWG->XWM Bridge][Trace] phase=ZOOM_GAP_CORRELATION dim={} regionX={} regionZ={} loaded_session={} loaded_visible={} prev_visible={} prev_session={} missing={} prev_missing={} classify={}",
-                    world.getRegistryKey().getValue(),
+                    world.dimension().identifier(),
                     regionX,
                     regionZ,
                     loadedSessionCount,

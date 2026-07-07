@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +22,7 @@ public final class VoxyRegionCoverageTracker {
     private VoxyRegionCoverageTracker() {
     }
 
-    public static void markChunkIngested(ServerWorld world, int chunkX, int chunkZ) {
+    public static void markChunkIngested(ServerLevel world, int chunkX, int chunkZ) {
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(world);
         int regionX = chunkX >> 5;
         int regionZ = chunkZ >> 5;
@@ -37,7 +37,7 @@ public final class VoxyRegionCoverageTracker {
         state.mark(chunkIndex);
     }
 
-    public static int getRegionCoverage(ServerWorld world, int regionX, int regionZ) {
+    public static int getRegionCoverage(ServerLevel world, int regionX, int regionZ) {
         ConcurrentHashMap<Long, RegionCoverageState> worldCoverage = COVERAGE.get(BridgePaths.getRuntimeCacheKey(world));
         if (worldCoverage == null) {
             return 0;

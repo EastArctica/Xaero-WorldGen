@@ -11,7 +11,7 @@ import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -78,15 +78,15 @@ public final class BridgeAuditLogger {
     }
 
     public static void log(
-        long tick,
-        String phase,
-        String result,
-        ServerWorld world,
-        Integer regionX,
-        Integer regionZ,
-        String details
+            long tick,
+            String phase,
+            String result,
+            ServerLevel world,
+            Integer regionX,
+            Integer regionZ,
+            String details
     ) {
-        String dimension = world == null ? "-" : world.getRegistryKey().getValue().toString();
+        String dimension = world == null ? "-" : world.dimension().identifier().toString();
         String region = regionX == null || regionZ == null ? "-,-" : regionX + "," + regionZ;
         String payload = "session="
             + sanitize(sessionId == null ? "unknown" : sessionId)

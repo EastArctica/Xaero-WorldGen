@@ -9,8 +9,8 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,8 +22,8 @@ public final class VoxyDirtyRegionMarker {
     private VoxyDirtyRegionMarker() {
     }
 
-    public static boolean markChunkDirty(World world, int chunkX, int chunkZ) {
-        if (!(world instanceof ServerWorld serverWorld)) {
+    public static boolean markChunkDirty(Level world, int chunkX, int chunkZ) {
+        if (!(world instanceof ServerLevel serverWorld)) {
             return false;
         }
 
@@ -50,10 +50,10 @@ public final class VoxyDirtyRegionMarker {
     }
 
     private static void maybeLogVanillaNoInvalidateTouch(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        BridgeDirtyRegionStore.DirtyMarkResult dirtyMarkResult
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            BridgeDirtyRegionStore.DirtyMarkResult dirtyMarkResult
     ) {
         if (world == null || dirtyMarkResult == null || !dirtyMarkResult.debounced()) {
             return;

@@ -10,9 +10,9 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.server.level.ServerLevel;
 import xaero.map.MapProcessor;
 import xaero.map.file.MapSaveLoad;
 import xaero.map.file.RegionDetection;
@@ -40,7 +40,7 @@ public final class XaeroBridgeSupport {
     private XaeroBridgeSupport() {
     }
 
-    public static ServerWorld resolveWorld(MapRegion region) {
+    public static ServerLevel resolveWorld(MapRegion region) {
         if (region == null || region.isNormalMapData()) {
             return null;
         }
@@ -50,30 +50,30 @@ public final class XaeroBridgeSupport {
             return null;
         }
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client == null) {
             return null;
         }
 
-        IntegratedServer server = client.getServer();
+        IntegratedServer server = client.getSingleplayerServer();
         if (server == null) {
             return null;
         }
 
-        return server.getWorld(dimension.getDimId());
+        return server.getLevel(dimension.getDimId());
     }
 
     public static boolean hasRealRegionFile(MapRegion region) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         return world != null && hasRealRegionFile(world, region.getRegionX(), region.getRegionZ());
     }
 
-    public static boolean hasRealRegionFile(ServerWorld world, int regionX, int regionZ) {
+    public static boolean hasRealRegionFile(ServerLevel world, int regionX, int regionZ) {
         return world != null && Files.isRegularFile(BridgePaths.getRegionFile(world, regionX, regionZ));
     }
 
     public static boolean shouldExposeBridgeSource(MapRegion region) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             return false;
         }
@@ -83,7 +83,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static boolean ensureReleasedBridgeSource(MapRegion region) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             return false;
         }
@@ -107,14 +107,14 @@ public final class XaeroBridgeSupport {
     }
 
     public static boolean ensureBridgeDetection(
-        MapProcessor mapProcessor,
-        MapDimension mapDimension,
-        ServerWorld world,
-        String worldId,
-        String dimId,
-        String mwId,
-        int regionX,
-        int regionZ
+            MapProcessor mapProcessor,
+            MapDimension mapDimension,
+            ServerLevel world,
+            String worldId,
+            String dimId,
+            String mwId,
+            int regionX,
+            int regionZ
     ) {
         if (mapProcessor == null || mapDimension == null || world == null) {
             return false;
@@ -151,14 +151,14 @@ public final class XaeroBridgeSupport {
     }
 
     public static boolean ensureVanillaDetection(
-        MapProcessor mapProcessor,
-        MapDimension mapDimension,
-        ServerWorld world,
-        String worldId,
-        String dimId,
-        String mwId,
-        int regionX,
-        int regionZ
+            MapProcessor mapProcessor,
+            MapDimension mapDimension,
+            ServerLevel world,
+            String worldId,
+            String dimId,
+            String mwId,
+            int regionX,
+            int regionZ
     ) {
         if (mapProcessor == null || mapDimension == null || world == null) {
             return false;
@@ -189,7 +189,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static boolean isBridgeRegionCandidate(MapRegion region) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             return false;
         }
@@ -206,7 +206,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static boolean shouldBypassCache(MapRegion region) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             return false;
         }
@@ -230,7 +230,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static void invalidateLegacyMixedCacheIfNeeded(MapRegion region, MapProcessor mapProcessor) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             return;
         }
@@ -278,7 +278,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static void invalidateDirtyCacheIfNeeded(MapRegion region, MapProcessor mapProcessor) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null || mapProcessor == null) {
             return;
         }
@@ -342,7 +342,7 @@ public final class XaeroBridgeSupport {
     }
 
     public static void invalidateAuditRepairCacheIfNeeded(MapRegion region, MapProcessor mapProcessor) {
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null || mapProcessor == null) {
             return;
         }
@@ -377,7 +377,7 @@ public final class XaeroBridgeSupport {
 
     public static BridgeDirtyRegionStore.DirtyClearResult clearDirtyAfterCacheWrite(MapRegion region, File file, boolean success) {
         CLEAR_DIRTY_REASON.remove();
-        ServerWorld world = resolveWorld(region);
+        ServerLevel world = resolveWorld(region);
         if (world == null) {
             CLEAR_DIRTY_REASON.set("world_null");
             traceRegionEvent("CACHE_WRITE_REASON", null, region.getRegionX(), region.getRegionZ(), "result=world_null,success=" + success);
@@ -727,12 +727,12 @@ public final class XaeroBridgeSupport {
     }
 
     private static void finalizeLease(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        BridgeLoadLeaseTracker.TerminalState terminalState,
-        long currentTick,
-        String terminalSource
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            BridgeLoadLeaseTracker.TerminalState terminalState,
+            long currentTick,
+            String terminalSource
     ) {
         boolean finalized = BridgeLoadLeaseTracker.tryFinalizeLease(
             world,
@@ -763,7 +763,7 @@ public final class XaeroBridgeSupport {
         return reason;
     }
 
-    private static String cacheRegionKey(ServerWorld world, MapRegion region) {
+    private static String cacheRegionKey(ServerLevel world, MapRegion region) {
         return BridgePaths.getRuntimeCacheKey(world)
             + "|"
             + region.getRegionX()
@@ -802,8 +802,8 @@ public final class XaeroBridgeSupport {
         return true;
     }
 
-    private static void traceRegionEvent(String phase, ServerWorld world, int regionX, int regionZ, String details) {
-        String dimension = world == null ? "unknown" : world.getRegistryKey().getValue().toString();
+    private static void traceRegionEvent(String phase, ServerLevel world, int regionX, int regionZ, String details) {
+        String dimension = world == null ? "unknown" : world.dimension().identifier().toString();
         if (world != null) {
             if ("CACHE_INVALIDATE_REASON".equals(phase) || "CACHE_WRITE_REASON".equals(phase)) {
                 BridgeRegionAuditService.touchRegion(world, regionX, regionZ, "cache_event");

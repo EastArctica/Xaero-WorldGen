@@ -11,8 +11,8 @@ import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -24,8 +24,8 @@ public final class BridgeLiveCaptureQueue {
     private BridgeLiveCaptureQueue() {
     }
 
-    public static void requestCapture(World world, int chunkX, int chunkZ) {
-        if (!(world instanceof ServerWorld serverWorld)) {
+    public static void requestCapture(Level world, int chunkX, int chunkZ) {
+        if (!(world instanceof ServerLevel serverWorld)) {
             return;
         }
 
@@ -39,8 +39,8 @@ public final class BridgeLiveCaptureQueue {
     }
 
     public static void tickServer(MinecraftServer server) {
-        long serverTick = server.getTicks();
-        for (ServerWorld world : server.getWorlds()) {
+        long serverTick = server.getTickCount();
+        for (ServerLevel world : server.getAllLevels()) {
             WorldQueue queue = QUEUES.get(BridgePaths.getRuntimeCacheKey(world));
             if (queue == null) {
                 continue;
@@ -53,7 +53,7 @@ public final class BridgeLiveCaptureQueue {
         QUEUES.clear();
     }
 
-    private static void processWorld(ServerWorld world, WorldQueue queue, long serverTick) {
+    private static void processWorld(ServerLevel world, WorldQueue queue, long serverTick) {
         int processed = 0;
         long startedAt = System.nanoTime();
         while (processed < BridgePerfBudget.LIVE_CAPTURE_CHUNKS_PER_TICK
@@ -81,7 +81,7 @@ public final class BridgeLiveCaptureQueue {
                 int activeLeases = BridgeLoadLeaseTracker.countActiveNoPurge(BridgePaths.getRuntimeCacheKey(world));
                 VwgXwmBridgeClient.LOGGER.info(
                     "[VWG->XWM Bridge][Perf] live_capture dim={} processed={} pending={} elapsedMs={} leaseActive={}",
-                    world.getRegistryKey().getValue(),
+                    world.dimension().identifier(),
                     processed,
                     pending,
                     String.format(java.util.Locale.ROOT, "%.3f", elapsedNanos / 1_000_000.0D),
@@ -91,7 +91,7 @@ public final class BridgeLiveCaptureQueue {
         }
     }
 
-    private static WorldQueue worldQueue(ServerWorld world) {
+    private static WorldQueue worldQueue(ServerLevel world) {
         return QUEUES.computeIfAbsent(BridgePaths.getRuntimeCacheKey(world), ignored -> new WorldQueue());
     }
 

@@ -1,8 +1,8 @@
 package com.alonie.xaero_worldgen.mixin.xaero;
 
 import com.alonie.xaero_worldgen.bridge.integration.xaero.XaeroBridgeSupport;
-import net.minecraft.registry.Registry;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.core.Registry;
+import net.minecraft.world.level.biome.Biome;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,16 +21,16 @@ public abstract class MapRegionMixin {
 
     @Inject(method = "loadCacheTextures", at = @At("HEAD"), cancellable = true)
     private void vwgxwm$skipDirtyCache(
-        MapProcessor mapProcessor,
-        Registry<Biome> biomeRegistry,
-        boolean caves,
-        boolean[][] seenTiles,
-        int caveStart,
-        boolean[] stoppedLoadingChunks,
-        boolean[] cacheLoaded,
-        int ignoredReason,
-        OldFormatSupport oldFormatSupport,
-        CallbackInfoReturnable<Boolean> cir
+            MapProcessor mapProcessor,
+            Registry<Biome> biomeRegistry,
+            boolean caves,
+            boolean[][] seenTiles,
+            int caveStart,
+            boolean[] stoppedLoadingChunks,
+            boolean[] cacheLoaded,
+            int ignoredReason,
+            OldFormatSupport oldFormatSupport,
+            CallbackInfoReturnable<Boolean> cir
     ) {
         XaeroBridgeSupport.invalidateLegacyMixedCacheIfNeeded((MapRegion) (Object) this, mapProcessor);
         XaeroBridgeSupport.invalidateAuditRepairCacheIfNeeded((MapRegion) (Object) this, mapProcessor);

@@ -14,15 +14,15 @@ import me.cortex.voxy.common.world.WorldSection;
 import me.cortex.voxy.common.world.other.Mapper;
 import me.cortex.voxy.commonImpl.WorldIdentifier;
 import net.minecraft.SharedConstants;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -49,9 +49,9 @@ public final class VoxyChunkNbtProvider {
         VANILLA_LIVE_RETRY_AFTER.clear();
     }
 
-    public NbtCompound createChunkNbt(ServerWorld world, ChunkPos chunkPos) {
+    public CompoundTag createChunkNbt(ServerLevel world, ChunkPos chunkPos) {
         LAST_ATTEMPT_REPORT.remove();
-        NbtCompound committedSnapshot = BridgeChunkSnapshotStore.getCommittedChunkNbt(world, chunkPos);
+        CompoundTag committedSnapshot = BridgeChunkSnapshotStore.getCommittedChunkNbt(world, chunkPos);
         if (committedSnapshot != null) {
             recordAttempt(chunkPos, true, "snapshot_committed_hit");
             return committedSnapshot;
@@ -72,7 +72,7 @@ public final class VoxyChunkNbtProvider {
         return null;
     }
 
-    private NbtCompound attemptVanillaMissingChunkLiveFallback(ServerWorld world, ChunkPos chunkPos) {
+    private CompoundTag attemptVanillaMissingChunkLiveFallback(ServerLevel world, ChunkPos chunkPos) {
         long now = System.currentTimeMillis();
         String retryKey = fallbackRetryKey(world, chunkPos);
         long retryAfterEpoch = VANILLA_LIVE_RETRY_AFTER.getOrDefault(retryKey, -1L);
@@ -81,7 +81,7 @@ public final class VoxyChunkNbtProvider {
             return null;
         }
 
-        NbtCompound liveChunkNbt = createLiveChunkNbt(world, chunkPos);
+        CompoundTag liveChunkNbt = createLiveChunkNbt(world, chunkPos);
         VoxyChunkReadinessTracker.Completeness completeness = VoxyChunkReadinessTracker.getLastCompleteness(world, chunkPos);
         if (liveChunkNbt != null) {
             VANILLA_LIVE_RETRY_AFTER.remove(retryKey);
@@ -99,7 +99,7 @@ public final class VoxyChunkNbtProvider {
         return null;
     }
 
-    public NbtCompound createLiveChunkNbt(ServerWorld world, ChunkPos chunkPos) {
+    public CompoundTag createLiveChunkNbt(ServerLevel world, ChunkPos chunkPos) {
         CompletenessReport report = evaluateCompleteness(world, chunkPos);
         if (report == null || report.chunkNbt() == null) {
             return null;
@@ -108,7 +108,7 @@ public final class VoxyChunkNbtProvider {
         return report.chunkNbt();
     }
 
-    private CompletenessReport evaluateCompleteness(ServerWorld world, ChunkPos chunkPos) {
+    private CompletenessReport evaluateCompleteness(ServerLevel world, ChunkPos chunkPos) {
         WorldIdentifier identifier = WorldIdentifier.of(world);
         WorldEngine engine = identifier.getNullable();
         if (engine == null) {
@@ -122,14 +122,14 @@ public final class VoxyChunkNbtProvider {
         if (mapper == null) {
             return new CompletenessReport(null, null, "mapper_unavailable");
         }
-        int bottomY = world.getBottomY();
+        int bottomY = world.getMinY();
         int minSectionY = Math.floorDiv(bottomY, 16);
         int sectionCount = (world.getHeight() + 15) / 16;
         int localChunkXOffset = Math.floorMod(chunkPos.x, 2) * 16;
         int localChunkZOffset = Math.floorMod(chunkPos.z, 2) * 16;
         int[] topPlusOne = new int[256];
         Arrays.fill(topPlusOne, bottomY);
-        NbtList sections = new NbtList();
+        ListTag sections = new ListTag();
         ChunkScanStats scanStats = new ChunkScanStats(bottomY);
 
         for (int sectionY = minSectionY; sectionY < minSectionY + sectionCount; sectionY++) {
@@ -155,8 +155,8 @@ public final class VoxyChunkNbtProvider {
             return new CompletenessReport(null, completeness, completeness.reason());
         }
 
-        NbtCompound chunkNbt = new NbtCompound();
-        String statusId = ChunkStatus.FULL.getId();
+        CompoundTag chunkNbt = new CompoundTag();
+        String statusId = ChunkStatus.FULL.getName();
         chunkNbt.putInt("xPos", chunkPos.x);
         chunkNbt.putInt("zPos", chunkPos.z);
         chunkNbt.putString("Status", statusId);
@@ -167,14 +167,14 @@ public final class VoxyChunkNbtProvider {
         chunkNbt.putLong("InhabitedTime", 0L);
         chunkNbt.put("sections", sections);
 
-        NbtCompound heightmaps = new NbtCompound();
+        CompoundTag heightmaps = new CompoundTag();
         heightmaps.putLongArray("WORLD_SURFACE", packHeightmap(topPlusOne, bottomY, world.getHeight()));
         chunkNbt.put("Heightmaps", heightmaps);
 
         // Xaero may parse legacy-style NBT in some paths, so include both modern root fields and a legacy Level wrapper.
-        NbtCompound root = new NbtCompound();
-        root.putInt("DataVersion", SharedConstants.getGameVersion().dataVersion().id());
-        root.copyFrom(chunkNbt);
+        CompoundTag root = new CompoundTag();
+        root.putInt("DataVersion", SharedConstants.getCurrentVersion().dataVersion().version());
+        root.merge(chunkNbt);
         root.put("Level", chunkNbt.copy());
         return new CompletenessReport(root, completeness, "ready");
     }
@@ -184,10 +184,10 @@ public final class VoxyChunkNbtProvider {
     }
 
     private void recordAttempt(
-        ChunkPos chunkPos,
-        boolean hit,
-        String reason,
-        VoxyChunkReadinessTracker.Completeness completeness
+            ChunkPos chunkPos,
+            boolean hit,
+            String reason,
+            VoxyChunkReadinessTracker.Completeness completeness
     ) {
         int presentSections = -1;
         int nonAirBlocks = -1;
@@ -228,7 +228,7 @@ public final class VoxyChunkNbtProvider {
                 seenSurfaceCandidateSection
             )
         );
-        ServerWorld world = BridgeContext.getCurrentWorld();
+        ServerLevel world = BridgeContext.getCurrentWorld();
         if (!hit && world != null) {
             BridgeFallbackMissTracker.recordMiss(world, chunkPos, reason);
         }
@@ -250,7 +250,7 @@ public final class VoxyChunkNbtProvider {
         }
     }
 
-    private NbtCompound buildSectionNbt(
+    private CompoundTag buildSectionNbt(
         long[] sectionData,
         Mapper mapper,
         int sectionY,
@@ -324,13 +324,13 @@ public final class VoxyChunkNbtProvider {
             }
         }
 
-        NbtCompound sectionTag = new NbtCompound();
+        CompoundTag sectionTag = new CompoundTag();
         sectionTag.putByte("Y", (byte) sectionY);
 
-        NbtCompound blockStatesTag = new NbtCompound();
-        NbtList blockPaletteTag = new NbtList();
+        CompoundTag blockStatesTag = new CompoundTag();
+        ListTag blockPaletteTag = new ListTag();
         for (BlockState state : blockPalette.keySet()) {
-            blockPaletteTag.add(NbtHelper.fromBlockState(state));
+            blockPaletteTag.add(NbtUtils.writeBlockState(state));
         }
         blockStatesTag.put("palette", blockPaletteTag);
         long[] blockData = packPaletteData(blockIndices, blockPalette.size(), 4096, 4);
@@ -339,10 +339,10 @@ public final class VoxyChunkNbtProvider {
         }
         sectionTag.put("block_states", blockStatesTag);
 
-        NbtCompound biomesTag = new NbtCompound();
-        NbtList biomePaletteTag = new NbtList();
+        CompoundTag biomesTag = new CompoundTag();
+        ListTag biomePaletteTag = new ListTag();
         for (String biomeId : biomePalette.keySet()) {
-            biomePaletteTag.add(NbtString.of(biomeId));
+            biomePaletteTag.add(StringTag.valueOf(biomeId));
         }
         biomesTag.put("palette", biomePaletteTag);
         long[] biomeData = packPaletteData(biomeIndices, biomePalette.size(), 64, 0);
@@ -368,11 +368,11 @@ public final class VoxyChunkNbtProvider {
 
     private BlockState resolveState(Mapper mapper, long mapping) {
         if (Mapper.isAir(mapping)) {
-            return Blocks.AIR.getDefaultState();
+            return Blocks.AIR.defaultBlockState();
         }
 
         BlockState state = mapper.getBlockStateFromBlockId(Mapper.getBlockId(mapping));
-        return state == null ? Blocks.AIR.getDefaultState() : state;
+        return state == null ? Blocks.AIR.defaultBlockState() : state;
     }
 
     private String resolveBiomeId(Mapper.BiomeEntry[] biomeEntries, int biomeId) {
@@ -440,7 +440,7 @@ public final class VoxyChunkNbtProvider {
         target[byteIndex] = (byte) current;
     }
 
-    private String fallbackRetryKey(ServerWorld world, ChunkPos chunkPos) {
+    private String fallbackRetryKey(ServerLevel world, ChunkPos chunkPos) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + chunkPos.x + "|" + chunkPos.z;
     }
 
@@ -492,9 +492,9 @@ public final class VoxyChunkNbtProvider {
     }
 
     private record CompletenessReport(
-        NbtCompound chunkNbt,
-        VoxyChunkReadinessTracker.Completeness completeness,
-        String reason
+            CompoundTag chunkNbt,
+            VoxyChunkReadinessTracker.Completeness completeness,
+            String reason
     ) {
     }
 }

@@ -9,9 +9,9 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,8 +26,8 @@ public final class VoxyChunkReadinessTracker {
     private VoxyChunkReadinessTracker() {
     }
 
-    public static void recordFullChunkIngest(World world, int chunkX, int chunkZ) {
-        if (!(world instanceof ServerWorld serverWorld)) {
+    public static void recordFullChunkIngest(Level world, int chunkX, int chunkZ) {
+        if (!(world instanceof ServerLevel serverWorld)) {
             return;
         }
 
@@ -39,8 +39,8 @@ public final class VoxyChunkReadinessTracker {
         }
     }
 
-    public static boolean recordSectionIngest(World world, int chunkX, int sectionY, int chunkZ) {
-        if (!(world instanceof ServerWorld serverWorld)) {
+    public static boolean recordSectionIngest(Level world, int chunkX, int sectionY, int chunkZ) {
+        if (!(world instanceof ServerLevel serverWorld)) {
             return false;
         }
 
@@ -61,7 +61,7 @@ public final class VoxyChunkReadinessTracker {
         }
     }
 
-    public static Snapshot snapshot(ServerWorld world, ChunkPos chunkPos) {
+    public static Snapshot snapshot(ServerLevel world, ChunkPos chunkPos) {
         ChunkState state = CHUNK_STATES.get(chunkKey(world, chunkPos.x, chunkPos.z));
         if (state == null) {
             return Snapshot.EMPTY;
@@ -79,15 +79,15 @@ public final class VoxyChunkReadinessTracker {
     }
 
     public static Completeness evaluateAndRecord(
-        ServerWorld world,
-        ChunkPos chunkPos,
-        int presentSections,
-        int nonAirBlocks,
-        int highestNonAirY,
-        int surfaceColumnCoverage
+            ServerLevel world,
+            ChunkPos chunkPos,
+            int presentSections,
+            int nonAirBlocks,
+            int highestNonAirY,
+            int surfaceColumnCoverage
     ) {
         Snapshot snapshot = snapshot(world, chunkPos);
-        int minimumSurfaceY = Math.max(0, world.getBottomY() + 32);
+        int minimumSurfaceY = Math.max(0, world.getMinY() + 32);
         String reason = "ready";
         boolean ready;
 
@@ -134,7 +134,7 @@ public final class VoxyChunkReadinessTracker {
         return completeness;
     }
 
-    public static Completeness getLastCompleteness(ServerWorld world, ChunkPos chunkPos) {
+    public static Completeness getLastCompleteness(ServerLevel world, ChunkPos chunkPos) {
         return LAST_COMPLETENESS.get(chunkKey(world, chunkPos.x, chunkPos.z));
     }
 
@@ -143,11 +143,11 @@ public final class VoxyChunkReadinessTracker {
         LAST_COMPLETENESS.clear();
     }
 
-    private static ChunkState stateFor(ServerWorld world, int chunkX, int chunkZ) {
+    private static ChunkState stateFor(ServerLevel world, int chunkX, int chunkZ) {
         return CHUNK_STATES.computeIfAbsent(chunkKey(world, chunkX, chunkZ), ignored -> new ChunkState());
     }
 
-    private static String chunkKey(ServerWorld world, int chunkX, int chunkZ) {
+    private static String chunkKey(ServerLevel world, int chunkX, int chunkZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + chunkX + "|" + chunkZ;
     }
 

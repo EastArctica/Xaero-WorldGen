@@ -4,10 +4,10 @@ import com.alonie.xaero_worldgen.bridge.snapshot.BridgeLiveCaptureQueue;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.VoxyChunkReadinessTracker;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.VoxyDirtyRegionMarker;
 import com.ethan.voxyworldgenv2.integration.VoxyIntegration;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkNibbleArray;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.DataLayer;
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,37 +16,37 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(VoxyIntegration.class)
 public abstract class VoxyIntegrationMixin {
     @Inject(method = "ingestChunk", at = @At("TAIL"))
-    private static void vwgxwm$markIngestedChunk(WorldChunk chunk, CallbackInfo ci) {
-        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z);
-        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z)) {
-            BridgeLiveCaptureQueue.requestCapture(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z);
+    private static void vwgxwm$markIngestedChunk(LevelChunk chunk, CallbackInfo ci) {
+        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
+        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z)) {
+            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
         }
     }
 
     @Inject(
-        method = "rawIngest(Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/world/chunk/ChunkNibbleArray;)V",
+        method = "rawIngest(Lnet/minecraft/world/level/chunk/LevelChunk;Lnet/minecraft/world/level/chunk/DataLayer;)V",
         at = @At("TAIL")
     )
-    private static void vwgxwm$markRawChunk(WorldChunk chunk, ChunkNibbleArray blockLight, CallbackInfo ci) {
-        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z);
-        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z)) {
-            BridgeLiveCaptureQueue.requestCapture(chunk.getWorld(), chunk.getPos().x, chunk.getPos().z);
+    private static void vwgxwm$markRawChunk(LevelChunk chunk, DataLayer blockLight, CallbackInfo ci) {
+        VoxyChunkReadinessTracker.recordFullChunkIngest(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
+        if (VoxyDirtyRegionMarker.markChunkDirty(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z)) {
+            BridgeLiveCaptureQueue.requestCapture(chunk.getLevel(), chunk.getPos().x, chunk.getPos().z);
         }
     }
 
     @Inject(
-        method = "rawIngest(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkSection;IIILnet/minecraft/world/chunk/ChunkNibbleArray;Lnet/minecraft/world/chunk/ChunkNibbleArray;)V",
+        method = "rawIngest(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/chunk/LevelChunkSection;IIILnet/minecraft/world/level/chunk/DataLayer;Lnet/minecraft/world/level/chunk/DataLayer;)V",
         at = @At("TAIL")
     )
     private static void vwgxwm$markRawSection(
-        World world,
-        ChunkSection section,
-        int chunkX,
-        int sectionY,
-        int chunkZ,
-        ChunkNibbleArray blockLight,
-        ChunkNibbleArray skyLight,
-        CallbackInfo ci
+            Level world,
+            LevelChunkSection section,
+            int chunkX,
+            int sectionY,
+            int chunkZ,
+            DataLayer blockLight,
+            DataLayer skyLight,
+            CallbackInfo ci
     ) {
         if (VoxyChunkReadinessTracker.recordSectionIngest(world, chunkX, sectionY, chunkZ)) {
             if (VoxyDirtyRegionMarker.markChunkDirty(world, chunkX, chunkZ)) {
@@ -56,17 +56,17 @@ public abstract class VoxyIntegrationMixin {
     }
 
     @Inject(
-        method = "rawIngest(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkSection;IIILnet/minecraft/world/chunk/ChunkNibbleArray;)V",
+        method = "rawIngest(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/chunk/LevelChunkSection;IIILnet/minecraft/world/level/chunk/DataLayer;)V",
         at = @At("TAIL")
     )
     private static void vwgxwm$markRawSectionSingleLight(
-        World world,
-        ChunkSection section,
-        int chunkX,
-        int sectionY,
-        int chunkZ,
-        ChunkNibbleArray blockLight,
-        CallbackInfo ci
+            Level world,
+            LevelChunkSection section,
+            int chunkX,
+            int sectionY,
+            int chunkZ,
+            DataLayer blockLight,
+            CallbackInfo ci
     ) {
         if (VoxyChunkReadinessTracker.recordSectionIngest(world, chunkX, sectionY, chunkZ)) {
             if (VoxyDirtyRegionMarker.markChunkDirty(world, chunkX, chunkZ)) {

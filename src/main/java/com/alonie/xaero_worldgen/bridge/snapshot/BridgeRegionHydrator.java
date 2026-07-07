@@ -10,10 +10,10 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public final class BridgeRegionHydrator {
     private BridgeRegionHydrator() {
     }
 
-    public static void requestHydrate(ServerWorld world, int regionX, int regionZ, Priority priority) {
+    public static void requestHydrate(ServerLevel world, int regionX, int regionZ, Priority priority) {
         if (world == null) {
             return;
         }
@@ -54,14 +54,14 @@ public final class BridgeRegionHydrator {
         });
     }
 
-    public static boolean isHydrating(ServerWorld world, int regionX, int regionZ) {
+    public static boolean isHydrating(ServerLevel world, int regionX, int regionZ) {
         HydrateTask task = TASKS.get(regionKey(world, regionX, regionZ));
         return task != null && !task.completed;
     }
 
     public static void tickServer(MinecraftServer server) {
-        long serverTick = server.getTicks();
-        for (ServerWorld world : server.getWorlds()) {
+        long serverTick = server.getTickCount();
+        for (ServerLevel world : server.getAllLevels()) {
             tickWorld(world, serverTick);
         }
     }
@@ -71,7 +71,7 @@ public final class BridgeRegionHydrator {
         ACTIVE_BY_RUNTIME.clear();
     }
 
-    private static void tickWorld(ServerWorld world, long serverTick) {
+    private static void tickWorld(ServerLevel world, long serverTick) {
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(world);
         String activeKey = ACTIVE_BY_RUNTIME.get(runtimeCacheKey);
         HydrateTask activeTask = activeKey == null ? null : TASKS.get(activeKey);
@@ -110,7 +110,7 @@ public final class BridgeRegionHydrator {
                 int activeLeases = BridgeLoadLeaseTracker.countActiveNoPurge(runtimeCacheKey);
                 VwgXwmBridgeClient.LOGGER.info(
                     "[VWG->XWM Bridge][Perf] hydrator dim={} processed={} pending={} paused={} active={} elapsedMs={} leaseActive={}",
-                    world.getRegistryKey().getValue(),
+                    world.dimension().identifier(),
                     result.processedChunks,
                     runtimeTaskCount,
                     pausedTaskCount,
@@ -122,12 +122,12 @@ public final class BridgeRegionHydrator {
         }
     }
 
-    private static HydrateTask selectNextTask(ServerWorld world) {
+    private static HydrateTask selectNextTask(ServerLevel world) {
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(world);
         ArrayList<HydrateTask> candidates = new ArrayList<>();
         for (Map.Entry<String, HydrateTask> entry : TASKS.entrySet()) {
             HydrateTask task = entry.getValue();
-            ServerWorld taskWorld = task.worldRef.get();
+            ServerLevel taskWorld = task.worldRef.get();
             if (taskWorld == null || !runtimeCacheKey.equals(task.runtimeCacheKey) || task.completed || task.shouldPause()) {
                 continue;
             }
@@ -147,7 +147,7 @@ public final class BridgeRegionHydrator {
         return candidates.get(0);
     }
 
-    private static ProcessResult processTask(ServerWorld world, HydrateTask task, long startedAtNanos) {
+    private static ProcessResult processTask(ServerLevel world, HydrateTask task, long startedAtNanos) {
         if (!BridgeSourcePolicy.allowsBridgeDataPipeline(world, task.regionX, task.regionZ)) {
             task.completed = true;
             return ProcessResult.EMPTY;
@@ -194,7 +194,7 @@ public final class BridgeRegionHydrator {
         return new ProcessResult(processed);
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 
@@ -216,17 +216,17 @@ public final class BridgeRegionHydrator {
         private final String key;
         private final int regionX;
         private final int regionZ;
-        private WeakReference<ServerWorld> worldRef;
+        private WeakReference<ServerLevel> worldRef;
         private Priority priority;
         private long requestedDirtyVersion;
-        private NbtCompound[] buffer;
+        private CompoundTag[] buffer;
         private int nextChunkIndex;
         private int missingChunks;
         private long deferUntilEpoch;
         private long lastWorkEpoch;
         private boolean completed;
 
-        private HydrateTask(ServerWorld world, int regionX, int regionZ, long requestedDirtyVersion, Priority priority) {
+        private HydrateTask(ServerLevel world, int regionX, int regionZ, long requestedDirtyVersion, Priority priority) {
             this.runtimeCacheKey = BridgePaths.getRuntimeCacheKey(world);
             this.key = regionKey(world, regionX, regionZ);
             this.regionX = regionX;
@@ -234,7 +234,7 @@ public final class BridgeRegionHydrator {
             this.worldRef = new WeakReference<>(world);
             this.priority = priority;
             this.requestedDirtyVersion = requestedDirtyVersion;
-            this.buffer = new NbtCompound[BridgeChunkSnapshotStore.REGION_CHUNK_COUNT];
+            this.buffer = new CompoundTag[BridgeChunkSnapshotStore.REGION_CHUNK_COUNT];
             this.nextChunkIndex = 0;
             this.missingChunks = 0;
             this.deferUntilEpoch = 0L;
@@ -242,7 +242,7 @@ public final class BridgeRegionHydrator {
             this.completed = false;
         }
 
-        private void touch(ServerWorld world, long dirtyVersion, Priority priority) {
+        private void touch(ServerLevel world, long dirtyVersion, Priority priority) {
             this.worldRef = new WeakReference<>(world);
             if (priority.rank < this.priority.rank) {
                 this.priority = priority;
@@ -254,7 +254,7 @@ public final class BridgeRegionHydrator {
 
         private void reset(long dirtyVersion) {
             this.requestedDirtyVersion = dirtyVersion;
-            this.buffer = new NbtCompound[BridgeChunkSnapshotStore.REGION_CHUNK_COUNT];
+            this.buffer = new CompoundTag[BridgeChunkSnapshotStore.REGION_CHUNK_COUNT];
             this.nextChunkIndex = 0;
             this.missingChunks = 0;
             this.completed = false;

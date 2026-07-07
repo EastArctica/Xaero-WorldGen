@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -26,7 +26,7 @@ public final class BridgeXaeroLoadedChunkTracker {
     private BridgeXaeroLoadedChunkTracker() {
     }
 
-    public static void markLoadedChunk(ServerWorld world, int chunkX, int chunkZ, SourceKind sourceKind) {
+    public static void markLoadedChunk(ServerLevel world, int chunkX, int chunkZ, SourceKind sourceKind) {
         if (world == null) {
             return;
         }
@@ -47,7 +47,7 @@ public final class BridgeXaeroLoadedChunkTracker {
         sessionState.mark(chunkIndex);
     }
 
-    public static RegionCoverage getRecentCoverage(ServerWorld world, int regionX, int regionZ, long currentTick, int ttlTicks) {
+    public static RegionCoverage getRecentCoverage(ServerLevel world, int regionX, int regionZ, long currentTick, int ttlTicks) {
         if (world == null) {
             return RegionCoverage.EMPTY;
         }
@@ -71,7 +71,7 @@ public final class BridgeXaeroLoadedChunkTracker {
         return coverage;
     }
 
-    public static RegionCoverage getSessionCoverage(ServerWorld world, int regionX, int regionZ) {
+    public static RegionCoverage getSessionCoverage(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return RegionCoverage.EMPTY;
         }
@@ -88,7 +88,7 @@ public final class BridgeXaeroLoadedChunkTracker {
         return state.snapshot();
     }
 
-    public static RegionCoverage getVisibleCoverage(ServerWorld world, int regionX, int regionZ, long expectedDirtyVersion) {
+    public static RegionCoverage getVisibleCoverage(ServerLevel world, int regionX, int regionZ, long expectedDirtyVersion) {
         if (world == null || expectedDirtyVersion <= 0L) {
             return RegionCoverage.EMPTY;
         }
@@ -105,7 +105,7 @@ public final class BridgeXaeroLoadedChunkTracker {
         return state.snapshot(expectedDirtyVersion);
     }
 
-    public static void markVisibleRegionFromSession(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static void markVisibleRegionFromSession(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         if (world == null || dirtyVersion <= 0L) {
             return;
         }
@@ -123,7 +123,7 @@ public final class BridgeXaeroLoadedChunkTracker {
             .mark(dirtyVersion, sessionCoverage.words(), sessionCoverage.count(), XaeroLiveRegionQueue.currentTick());
     }
 
-    public static void invalidateVisibleCoverage(ServerWorld world, int regionX, int regionZ) {
+    public static void invalidateVisibleCoverage(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return;
         }
@@ -139,7 +139,7 @@ public final class BridgeXaeroLoadedChunkTracker {
         }
     }
 
-    public static RegionCoverage getRegionCoverage(ServerWorld world, int regionX, int regionZ, long currentTick, int ttlTicks) {
+    public static RegionCoverage getRegionCoverage(ServerLevel world, int regionX, int regionZ, long currentTick, int ttlTicks) {
         return getRecentCoverage(world, regionX, regionZ, currentTick, ttlTicks);
     }
 

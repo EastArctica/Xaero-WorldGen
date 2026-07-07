@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +24,7 @@ public final class BridgeSuspectRetryTracker {
     private BridgeSuspectRetryTracker() {
     }
 
-    public static void markSuspect(ServerWorld world, int regionX, int regionZ, long dirtyVersion, String reason) {
+    public static void markSuspect(ServerLevel world, int regionX, int regionZ, long dirtyVersion, String reason) {
         if (world == null || dirtyVersion <= 0L) {
             return;
         }
@@ -43,7 +43,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static boolean hasActiveSuspect(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static boolean hasActiveSuspect(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         SuspectState state = SUSPECTS.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return false;
@@ -54,7 +54,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static boolean canIssueRetry(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static boolean canIssueRetry(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         SuspectState state = SUSPECTS.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return true;
@@ -68,7 +68,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static long recommendedRetryDelayTicks(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static long recommendedRetryDelayTicks(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         SuspectState state = SUSPECTS.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return BASE_RETRY_TICKS;
@@ -88,7 +88,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static void onRetryRequested(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static void onRetryRequested(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         SuspectState state = SUSPECTS.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return;
@@ -102,7 +102,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static void clearResolved(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static void clearResolved(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         String regionKey = regionKey(world, regionX, regionZ);
         SuspectState state = SUSPECTS.get(regionKey);
         if (state == null) {
@@ -116,7 +116,7 @@ public final class BridgeSuspectRetryTracker {
         }
     }
 
-    public static void clearRegion(ServerWorld world, int regionX, int regionZ) {
+    public static void clearRegion(ServerLevel world, int regionX, int regionZ) {
         SUSPECTS.remove(regionKey(world, regionX, regionZ));
     }
 
@@ -124,7 +124,7 @@ public final class BridgeSuspectRetryTracker {
         SUSPECTS.clear();
     }
 
-    public static ArrayList<SuspectRegion> snapshotActiveRegions(ServerWorld world) {
+    public static ArrayList<SuspectRegion> snapshotActiveRegions(ServerLevel world) {
         ArrayList<SuspectRegion> snapshot = new ArrayList<>();
         if (world == null) {
             return snapshot;
@@ -162,7 +162,7 @@ public final class BridgeSuspectRetryTracker {
         return snapshot;
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 

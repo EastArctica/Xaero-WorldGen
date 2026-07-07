@@ -71,7 +71,7 @@ public class VwgXwmBridgeClient implements ClientModInitializer {
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             BridgeAuditLogger.startSession();
-            for (var world : server.getWorlds()) {
+            for (var world : server.getAllLevels()) {
                 VoxyGeneratedRegionIndex.bootstrap(world);
                 BridgeLegacyRegionQuarantine.scanAndQuarantine(world);
                 BridgeStateFlushService.requestFlush(world);

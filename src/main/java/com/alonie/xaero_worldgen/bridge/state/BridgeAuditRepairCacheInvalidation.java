@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -19,7 +19,7 @@ public final class BridgeAuditRepairCacheInvalidation {
     private BridgeAuditRepairCacheInvalidation() {
     }
 
-    public static void requestInvalidation(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static void requestInvalidation(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         if (world == null) {
             return;
         }
@@ -28,7 +28,7 @@ public final class BridgeAuditRepairCacheInvalidation {
         REQUESTED.merge(key, requestedVersion, Math::max);
     }
 
-    public static boolean consumeIfRequested(ServerWorld world, int regionX, int regionZ, long currentDirtyVersion) {
+    public static boolean consumeIfRequested(ServerLevel world, int regionX, int regionZ, long currentDirtyVersion) {
         if (world == null) {
             return false;
         }
@@ -47,7 +47,7 @@ public final class BridgeAuditRepairCacheInvalidation {
         REQUESTED.clear();
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 }

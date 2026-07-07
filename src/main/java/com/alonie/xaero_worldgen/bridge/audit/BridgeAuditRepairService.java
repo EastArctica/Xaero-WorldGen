@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.Locale;
@@ -28,17 +28,17 @@ public final class BridgeAuditRepairService {
             return;
         }
 
-        long tick = server.getTicks();
+        long tick = server.getTickCount();
         if (tick <= 0L || tick % config.intervalTicks() != 0L) {
             return;
         }
 
-        for (ServerWorld world : server.getWorlds()) {
+        for (ServerLevel world : server.getAllLevels()) {
             processWorld(world, tick, config);
         }
     }
 
-    private static void processWorld(ServerWorld world, long tick, BridgeAuditRepairConfig.Config config) {
+    private static void processWorld(ServerLevel world, long tick, BridgeAuditRepairConfig.Config config) {
         long startedNanos = System.nanoTime();
         long timeBudgetNanos = Math.max(100_000L, config.timeBudgetMicros() * 1_000L);
         ArrayList<BridgeRegionAuditService.RepairCandidate> candidates = BridgeRegionAuditService.snapshotRepairCandidates(
@@ -206,7 +206,7 @@ public final class BridgeAuditRepairService {
         if (tick % SUMMARY_INTERVAL_TICKS == 0L) {
             com.alonie.xaero_worldgen.VwgXwmBridgeClient.LOGGER.info(
                 "[VWG->XWM Bridge][Trace] phase=REPAIR_ROLLUP dim={} result=window processed={} candidates={} cooldownSkipped={} policySkipped={} budgetLimited={} elapsedMicros={}",
-                world.getRegistryKey().getValue(),
+                world.dimension().identifier(),
                 processed,
                 candidates.size(),
                 cooldownSkipped,

@@ -10,7 +10,7 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -23,7 +23,7 @@ public final class VoxyRegionFileStub {
     private VoxyRegionFileStub() {
     }
 
-    public static void ensurePresent(ServerWorld world, int regionX, int regionZ) {
+    public static void ensurePresent(ServerLevel world, int regionX, int regionZ) {
         Path regionFile = BridgePaths.getBridgeStubRegionFile(world, regionX, regionZ);
 
         try {

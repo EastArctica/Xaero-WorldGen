@@ -9,8 +9,8 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,7 +22,7 @@ public final class BridgeFallbackMissTracker {
     private BridgeFallbackMissTracker() {
     }
 
-    public static void recordMiss(ServerWorld world, ChunkPos chunkPos, String reason) {
+    public static void recordMiss(ServerLevel world, ChunkPos chunkPos, String reason) {
         if (world == null || chunkPos == null || reason == null) {
             return;
         }
@@ -43,7 +43,7 @@ public final class BridgeFallbackMissTracker {
         }
     }
 
-    public static boolean hasRecentTooFewBlocks(ServerWorld world, int regionX, int regionZ) {
+    public static boolean hasRecentTooFewBlocks(ServerLevel world, int regionX, int regionZ) {
         TooFewState state = TOO_FEW_MISS.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return false;
@@ -63,7 +63,7 @@ public final class BridgeFallbackMissTracker {
         TOO_FEW_MISS.clear();
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 

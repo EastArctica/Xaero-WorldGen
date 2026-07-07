@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,25 +25,25 @@ public final class BridgeRegionBuildTracker {
     private BridgeRegionBuildTracker() {
     }
 
-    public static void recordRefreshRequested(ServerWorld world, int regionX, int regionZ) {
+    public static void recordRefreshRequested(ServerLevel world, int regionX, int regionZ) {
         recordRefreshRequested(world, regionX, regionZ, -1L);
     }
 
-    public static void recordRefreshRequested(ServerWorld world, int regionX, int regionZ, long requestTick) {
+    public static void recordRefreshRequested(ServerLevel world, int regionX, int regionZ, long requestTick) {
         recordRequest(world, regionX, regionZ, requestTick, RequestKind.REFRESH, false);
     }
 
     public static void recordLoadRequested(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long requestTick,
-        boolean bridgeOwnedWritePrime
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long requestTick,
+            boolean bridgeOwnedWritePrime
     ) {
         recordRequest(world, regionX, regionZ, requestTick, RequestKind.LOAD, bridgeOwnedWritePrime);
     }
 
-    public static long recordBuildStart(ServerWorld world, int regionX, int regionZ) {
+    public static long recordBuildStart(ServerLevel world, int regionX, int regionZ) {
         purgeExpiredStates();
         String key = keyOf(world, regionX, regionZ);
         BuildState state = BUILD_STATES.get(key);
@@ -60,7 +60,7 @@ public final class BridgeRegionBuildTracker {
         return state.requestedDirtyVersion;
     }
 
-    public static void recordLoadStart(ServerWorld world, int regionX, int regionZ, long loadTick) {
+    public static void recordLoadStart(ServerLevel world, int regionX, int regionZ, long loadTick) {
         purgeExpiredStates();
         BuildState state = BUILD_STATES.get(keyOf(world, regionX, regionZ));
         if (state == null) {
@@ -69,25 +69,25 @@ public final class BridgeRegionBuildTracker {
         state.markLoadStart(loadTick);
     }
 
-    public static long consumeBuildVersion(ServerWorld world, int regionX, int regionZ) {
+    public static long consumeBuildVersion(ServerLevel world, int regionX, int regionZ) {
         purgeExpiredStates();
         BuildState state = BUILD_STATES.remove(keyOf(world, regionX, regionZ));
         return state != null && state.inFlight ? state.requestedDirtyVersion : -1L;
     }
 
-    public static long consumeTrackedVersion(ServerWorld world, int regionX, int regionZ) {
+    public static long consumeTrackedVersion(ServerLevel world, int regionX, int regionZ) {
         purgeExpiredStates();
         BuildState state = BUILD_STATES.remove(keyOf(world, regionX, regionZ));
         return state != null ? state.requestedDirtyVersion : -1L;
     }
 
-    public static long peekBuildVersion(ServerWorld world, int regionX, int regionZ) {
+    public static long peekBuildVersion(ServerLevel world, int regionX, int regionZ) {
         purgeExpiredStates();
         BuildState state = BUILD_STATES.get(keyOf(world, regionX, regionZ));
         return state != null && state.inFlight ? state.requestedDirtyVersion : -1L;
     }
 
-    public static RequestStatus getRequestStatus(ServerWorld world, int regionX, int regionZ) {
+    public static RequestStatus getRequestStatus(ServerLevel world, int regionX, int regionZ) {
         purgeExpiredStates();
         BuildState state = BUILD_STATES.get(keyOf(world, regionX, regionZ));
         if (state == null) {
@@ -97,7 +97,7 @@ public final class BridgeRegionBuildTracker {
         return state.toStatus();
     }
 
-    public static boolean isBuildInFlight(ServerWorld world, int regionX, int regionZ) {
+    public static boolean isBuildInFlight(ServerLevel world, int regionX, int regionZ) {
         return peekBuildVersion(world, regionX, regionZ) > 0L;
     }
 
@@ -155,17 +155,17 @@ public final class BridgeRegionBuildTracker {
         BUILD_STATES.clear();
     }
 
-    private static String keyOf(ServerWorld world, int regionX, int regionZ) {
+    private static String keyOf(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 
     private static void recordRequest(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long requestTick,
-        RequestKind requestKind,
-        boolean bridgeOwnedWritePrime
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long requestTick,
+            RequestKind requestKind,
+            boolean bridgeOwnedWritePrime
     ) {
         purgeExpiredStates();
         long dirtyVersion = BridgeDirtyRegionStore.getDirtyVersion(world, regionX, regionZ);

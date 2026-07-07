@@ -10,9 +10,9 @@ import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
 import com.alonie.xaero_worldgen.VwgXwmBridgeClient;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.server.integrated.IntegratedServer;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.server.IntegratedServer;
+import net.minecraft.server.level.ServerLevel;
 import xaero.map.MapProcessor;
 import xaero.map.WorldMapSession;
 import xaero.map.region.MapRegion;
@@ -57,7 +57,7 @@ public final class XaeroLiveRegionQueue {
         return CLIENT_TICK_COUNTER.get();
     }
 
-    public static void enqueue(ServerWorld world, int regionX, int regionZ) {
+    public static void enqueue(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return;
         }
@@ -75,17 +75,17 @@ public final class XaeroLiveRegionQueue {
         }
     }
 
-    public static void handleDisconnect(MinecraftClient client) {
+    public static void handleDisconnect(Minecraft client) {
         clear();
     }
 
-    public static void tick(MinecraftClient client) {
+    public static void tick(Minecraft client) {
         long currentTick = CLIENT_TICK_COUNTER.incrementAndGet();
         if (client == null) {
             return;
         }
 
-        if (client.player == null || client.world == null) {
+        if (client.player == null || client.level == null) {
             clear();
             return;
         }
@@ -110,19 +110,19 @@ public final class XaeroLiveRegionQueue {
             return;
         }
 
-        IntegratedServer server = client.getServer();
-        if (server == null || server.isStopping()) {
+        IntegratedServer server = client.getSingleplayerServer();
+        if (server == null || server.isShutdown()) {
             clear();
             return;
         }
 
-        ServerWorld serverWorld = server.getWorld(mapDimension.getDimId());
+        ServerLevel serverWorld = server.getLevel(mapDimension.getDimId());
         if (serverWorld == null) {
             return;
         }
 
-        int playerRegionX = client.player.getChunkPos().x >> 5;
-        int playerRegionZ = client.player.getChunkPos().z >> 5;
+        int playerRegionX = client.player.chunkPosition().x >> 5;
+        int playerRegionZ = client.player.chunkPosition().z >> 5;
         String runtimeCacheKey = BridgePaths.getRuntimeCacheKey(serverWorld);
         syncDirtyReplay(serverWorld, runtimeCacheKey);
         if (PENDING.isEmpty()) {
@@ -311,7 +311,7 @@ public final class XaeroLiveRegionQueue {
         }
     }
 
-    private static boolean applySuspectRetryGate(ServerWorld serverWorld, PendingRegion pendingRegion, long currentTick) {
+    private static boolean applySuspectRetryGate(ServerLevel serverWorld, PendingRegion pendingRegion, long currentTick) {
         long dirtyVersion = pendingRegion.dirtyVersion();
         if (dirtyVersion <= 0L) {
             return false;
@@ -338,7 +338,7 @@ public final class XaeroLiveRegionQueue {
         return false;
     }
 
-    private static long bridgeRetryTicksForFailure(ServerWorld serverWorld, PendingRegion pendingRegion) {
+    private static long bridgeRetryTicksForFailure(ServerLevel serverWorld, PendingRegion pendingRegion) {
         long dirtyVersion = pendingRegion.dirtyVersion();
         if (dirtyVersion > 0L && BridgeSuspectRetryTracker.hasActiveSuspect(
             serverWorld,
@@ -398,7 +398,7 @@ public final class XaeroLiveRegionQueue {
         return ordered;
     }
 
-    private static void syncDirtyReplay(ServerWorld serverWorld, String runtimeCacheKey) {
+    private static void syncDirtyReplay(ServerLevel serverWorld, String runtimeCacheKey) {
         if (!BOOTSTRAPPED_RUNTIME_KEYS.add(runtimeCacheKey)) {
             return;
         }
@@ -412,7 +412,7 @@ public final class XaeroLiveRegionQueue {
         PENDING.compute(incoming.key(), (ignored, existing) -> existing == null ? incoming : existing.touch(incoming));
     }
 
-    private static boolean isTerminal(ServerWorld serverWorld, PendingRegion pendingRegion) {
+    private static boolean isTerminal(ServerLevel serverWorld, PendingRegion pendingRegion) {
         boolean dirty = BridgeDirtyRegionStore.isDirty(serverWorld, pendingRegion.regionX(), pendingRegion.regionZ());
         if (!dirty) {
             BridgeSuspectRetryTracker.clearRegion(serverWorld, pendingRegion.regionX(), pendingRegion.regionZ());
@@ -426,10 +426,10 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static boolean handleOutstandingRequest(
-        MapProcessor mapProcessor,
-        ServerWorld serverWorld,
-        PendingRegion pendingRegion,
-        long currentTick
+            MapProcessor mapProcessor,
+            ServerLevel serverWorld,
+            PendingRegion pendingRegion,
+            long currentTick
     ) {
         if (!pendingRegion.hasOutstandingRequest()) {
             return false;
@@ -505,11 +505,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static boolean handleOutstandingAssistRequest(
-        MapProcessor mapProcessor,
-        ServerWorld serverWorld,
-        PendingRegion pendingRegion,
-        BridgeLoadLeaseTracker.RequestStatus requestStatus,
-        long currentTick
+            MapProcessor mapProcessor,
+            ServerLevel serverWorld,
+            PendingRegion pendingRegion,
+            BridgeLoadLeaseTracker.RequestStatus requestStatus,
+            long currentTick
     ) {
         if (requestStatus != null) {
             if (requestStatus.started() && !pendingRegion.outstandingRequestStarted()) {
@@ -680,11 +680,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static void emitAssistLoadResult(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long dirtyVersion,
-        BridgeLoadLeaseTracker.LoadResult loadResult
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long dirtyVersion,
+            BridgeLoadLeaseTracker.LoadResult loadResult
     ) {
         if (world == null) {
             return;
@@ -750,11 +750,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static RequestAttempt requestBridgeLoad(
-        MapProcessor mapProcessor,
-        MapDimension mapDimension,
-        ServerWorld serverWorld,
-        int regionX,
-        int regionZ
+            MapProcessor mapProcessor,
+            MapDimension mapDimension,
+            ServerLevel serverWorld,
+            int regionX,
+            int regionZ
     ) {
         BridgeSourcePolicy.SourcePolicy sourcePolicy = BridgeSourcePolicy.classify(serverWorld, regionX, regionZ);
         if (sourcePolicy != BridgeSourcePolicy.SourcePolicy.BRIDGE_ONLY) {
@@ -808,11 +808,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static RequestAttempt requestVanillaAssistLoad(
-        MapProcessor mapProcessor,
-        MapDimension mapDimension,
-        ServerWorld serverWorld,
-        int regionX,
-        int regionZ
+            MapProcessor mapProcessor,
+            MapDimension mapDimension,
+            ServerLevel serverWorld,
+            int regionX,
+            int regionZ
     ) {
         if (!BridgeSourcePolicy.allowsVanillaAssistLoad(serverWorld, regionX, regionZ)) {
             return RequestAttempt.policyBlocked(RequestKind.VANILLA_ASSIST_LOAD);
@@ -886,11 +886,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static void logAssistEvent(
-        String phase,
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        String details
+            String phase,
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            String details
     ) {
         if (world == null || phase == null || phase.isBlank()) {
             return;
@@ -899,7 +899,7 @@ public final class XaeroLiveRegionQueue {
         VwgXwmBridgeClient.LOGGER.info(
             "[VWG->XWM Bridge][Trace] phase={} dim={} regionX={} regionZ={} {}",
             phase,
-            world.getRegistryKey().getValue(),
+            world.dimension().identifier(),
             regionX,
             regionZ,
             details == null ? "" : details
@@ -907,12 +907,12 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static void logAssistLease(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        String state,
-        long dirtyVersion,
-        String details
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            String state,
+            long dirtyVersion,
+            String details
     ) {
         if (world == null) {
             return;
@@ -926,11 +926,11 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static void maybeLogAssistSingleflightSkip(
-        ServerWorld world,
-        PendingRegion pendingRegion,
-        long currentTick,
-        String result,
-        String details
+            ServerLevel world,
+            PendingRegion pendingRegion,
+            long currentTick,
+            String result,
+            String details
     ) {
         if (world == null || pendingRegion == null) {
             return;
@@ -948,12 +948,12 @@ public final class XaeroLiveRegionQueue {
     }
 
     private static void recordAssistTerminal(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        BridgeLoadLeaseTracker.TerminalState terminalState,
-        long currentTick,
-        long dirtyVersion
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            BridgeLoadLeaseTracker.TerminalState terminalState,
+            long currentTick,
+            long dirtyVersion
     ) {
         if (world == null || terminalState == null) {
             return;
@@ -1123,7 +1123,7 @@ public final class XaeroLiveRegionQueue {
             this.lastSingleflightLogResult = "";
         }
 
-        private static PendingRegion from(ServerWorld world, int regionX, int regionZ, long currentTick) {
+        private static PendingRegion from(ServerLevel world, int regionX, int regionZ, long currentTick) {
             long dirtyEpoch = BridgeDirtyRegionStore.getDirtyEpoch(world, regionX, regionZ);
             if (dirtyEpoch <= 0L) {
                 dirtyEpoch = System.currentTimeMillis();
@@ -1154,7 +1154,7 @@ public final class XaeroLiveRegionQueue {
             return this;
         }
 
-        private void refreshFromDirtyStore(ServerWorld world) {
+        private void refreshFromDirtyStore(ServerLevel world) {
             long latestDirtyVersion = BridgeDirtyRegionStore.getDirtyVersion(world, regionX, regionZ);
             if (latestDirtyVersion > this.dirtyVersion) {
                 this.dirtyVersion = latestDirtyVersion;

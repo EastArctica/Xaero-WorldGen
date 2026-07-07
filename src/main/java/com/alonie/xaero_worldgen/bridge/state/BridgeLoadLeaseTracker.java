@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,13 +23,13 @@ public final class BridgeLoadLeaseTracker {
     }
 
     public static void requestLease(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long requestedDirtyVersion,
-        long requestTick,
-        boolean bridgeOwnedWritePrime,
-        LeaseKind leaseKind
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long requestedDirtyVersion,
+            long requestTick,
+            boolean bridgeOwnedWritePrime,
+            LeaseKind leaseKind
     ) {
         if (world == null || requestedDirtyVersion <= 0L || requestTick < 0L) {
             return;
@@ -39,7 +39,7 @@ public final class BridgeLoadLeaseTracker {
         LEASES.put(regionKey(world, regionX, regionZ), state);
     }
 
-    public static void ackLoadStart(ServerWorld world, int regionX, int regionZ, long loadTick) {
+    public static void ackLoadStart(ServerLevel world, int regionX, int regionZ, long loadTick) {
         LeaseState state = LEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return;
@@ -54,7 +54,7 @@ public final class BridgeLoadLeaseTracker {
         }
     }
 
-    public static void ackBuildStart(ServerWorld world, int regionX, int regionZ, long buildTick) {
+    public static void ackBuildStart(ServerLevel world, int regionX, int regionZ, long buildTick) {
         LeaseState state = LEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return;
@@ -69,7 +69,7 @@ public final class BridgeLoadLeaseTracker {
         }
     }
 
-    public static void recordLoadResult(ServerWorld world, int regionX, int regionZ, boolean loaded, long tick) {
+    public static void recordLoadResult(ServerLevel world, int regionX, int regionZ, boolean loaded, long tick) {
         LeaseState state = LEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return;
@@ -83,7 +83,7 @@ public final class BridgeLoadLeaseTracker {
         }
     }
 
-    public static void recordCacheWriteResult(ServerWorld world, int regionX, int regionZ, boolean success, long tick) {
+    public static void recordCacheWriteResult(ServerLevel world, int regionX, int regionZ, boolean success, long tick) {
         LeaseState state = LEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return;
@@ -97,28 +97,28 @@ public final class BridgeLoadLeaseTracker {
         }
     }
 
-    public static void completeLease(ServerWorld world, int regionX, int regionZ, TerminalState terminalState, long tick) {
+    public static void completeLease(ServerLevel world, int regionX, int regionZ, TerminalState terminalState, long tick) {
         completeLease(world, regionX, regionZ, terminalState, tick, null);
     }
 
     public static void completeLease(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        TerminalState terminalState,
-        long tick,
-        String terminalSource
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            TerminalState terminalState,
+            long tick,
+            String terminalSource
     ) {
         tryFinalizeLease(world, regionX, regionZ, terminalState, tick, terminalSource);
     }
 
     public static boolean tryFinalizeLease(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        TerminalState terminalState,
-        long tick,
-        String terminalSource
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            TerminalState terminalState,
+            long tick,
+            String terminalSource
     ) {
         LeaseState state = LEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
@@ -170,12 +170,12 @@ public final class BridgeLoadLeaseTracker {
         return count;
     }
 
-    public static boolean isLeaseActive(ServerWorld world, int regionX, int regionZ, long currentTick) {
+    public static boolean isLeaseActive(ServerLevel world, int regionX, int regionZ, long currentTick) {
         RequestStatus status = getLeaseStatus(world, regionX, regionZ, currentTick);
         return status != null && status.active();
     }
 
-    public static RequestStatus getLeaseStatus(ServerWorld world, int regionX, int regionZ, long currentTick) {
+    public static RequestStatus getLeaseStatus(ServerLevel world, int regionX, int regionZ, long currentTick) {
         String key = regionKey(world, regionX, regionZ);
         LeaseState state = LEASES.get(key);
         if (state == null) {
@@ -234,7 +234,7 @@ public final class BridgeLoadLeaseTracker {
         }
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 

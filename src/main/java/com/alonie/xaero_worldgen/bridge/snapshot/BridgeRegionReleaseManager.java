@@ -9,7 +9,7 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,11 +20,11 @@ public final class BridgeRegionReleaseManager {
     }
 
     public static void markReleasedOnCommit(
-        ServerWorld world,
-        int regionX,
-        int regionZ,
-        long committedDirtyVersion,
-        long committedSnapshotVersion
+            ServerLevel world,
+            int regionX,
+            int regionZ,
+            long committedDirtyVersion,
+            long committedSnapshotVersion
     ) {
         if (world == null || committedDirtyVersion <= 0L) {
             return;
@@ -39,7 +39,7 @@ public final class BridgeRegionReleaseManager {
         }
     }
 
-    public static void revokeOnDirtyAdvance(ServerWorld world, int regionX, int regionZ) {
+    public static void revokeOnDirtyAdvance(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return;
         }
@@ -57,7 +57,7 @@ public final class BridgeRegionReleaseManager {
         }
     }
 
-    public static boolean isReleased(ServerWorld world, int regionX, int regionZ) {
+    public static boolean isReleased(ServerLevel world, int regionX, int regionZ) {
         if (world == null) {
             return false;
         }
@@ -76,7 +76,7 @@ public final class BridgeRegionReleaseManager {
         }
     }
 
-    public static boolean hasCurrentCommittedDirtyVersion(ServerWorld world, int regionX, int regionZ) {
+    public static boolean hasCurrentCommittedDirtyVersion(ServerLevel world, int regionX, int regionZ) {
         if (!isReleased(world, regionX, regionZ)) {
             return false;
         }
@@ -89,7 +89,7 @@ public final class BridgeRegionReleaseManager {
         return currentCommittedDirtyVersion(world, regionX, regionZ) == currentDirtyVersion;
     }
 
-    public static long currentCommittedDirtyVersion(ServerWorld world, int regionX, int regionZ) {
+    public static long currentCommittedDirtyVersion(ServerLevel world, int regionX, int regionZ) {
         ReleaseState state = RELEASES.get(regionKey(world, regionX, regionZ));
         if (state == null) {
             return -1L;
@@ -104,7 +104,7 @@ public final class BridgeRegionReleaseManager {
         RELEASES.clear();
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 

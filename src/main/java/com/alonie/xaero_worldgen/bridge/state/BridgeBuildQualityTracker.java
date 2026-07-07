@@ -9,8 +9,8 @@ import com.alonie.xaero_worldgen.bridge.snapshot.*;
 import com.alonie.xaero_worldgen.bridge.integration.voxy.*;
 import com.alonie.xaero_worldgen.bridge.integration.xaero.*;
 import com.alonie.xaero_worldgen.bridge.migration.*;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.ChunkPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,7 +22,7 @@ public final class BridgeBuildQualityTracker {
     private BridgeBuildQualityTracker() {
     }
 
-    public static void beginRegionBuild(ServerWorld world, int regionX, int regionZ, long dirtyVersion) {
+    public static void beginRegionBuild(ServerLevel world, int regionX, int regionZ, long dirtyVersion) {
         ACTIVE_BUILDS.put(
             regionKey(world, regionX, regionZ),
             new ActiveBuild(
@@ -32,7 +32,7 @@ public final class BridgeBuildQualityTracker {
         );
     }
 
-    public static void recordVanillaHit(ServerWorld world, ChunkPos chunkPos) {
+    public static void recordVanillaHit(ServerLevel world, ChunkPos chunkPos) {
         ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5));
         if (activeBuild == null) {
             return;
@@ -41,7 +41,7 @@ public final class BridgeBuildQualityTracker {
         activeBuild.recordVanillaHit(packChunk(chunkPos.x, chunkPos.z));
     }
 
-    public static void recordFallbackResult(ServerWorld world, ChunkPos chunkPos, boolean hit, boolean coordMismatch) {
+    public static void recordFallbackResult(ServerLevel world, ChunkPos chunkPos, boolean hit, boolean coordMismatch) {
         ActiveBuild activeBuild = ACTIVE_BUILDS.get(regionKey(world, chunkPos.x >> 5, chunkPos.z >> 5));
         if (activeBuild == null) {
             return;
@@ -50,7 +50,7 @@ public final class BridgeBuildQualityTracker {
         activeBuild.recordFallback(packChunk(chunkPos.x, chunkPos.z), hit, coordMismatch);
     }
 
-    public static BuildQuality endRegionBuild(ServerWorld world, int regionX, int regionZ, boolean built) {
+    public static BuildQuality endRegionBuild(ServerLevel world, int regionX, int regionZ, boolean built) {
         String regionKey = regionKey(world, regionX, regionZ);
         ActiveBuild activeBuild = ACTIVE_BUILDS.remove(regionKey);
         if (activeBuild == null) {
@@ -78,7 +78,7 @@ public final class BridgeBuildQualityTracker {
         return quality;
     }
 
-    public static BuildQuality getLastQuality(ServerWorld world, int regionX, int regionZ) {
+    public static BuildQuality getLastQuality(ServerLevel world, int regionX, int regionZ) {
         return LAST_QUALITIES.get(regionKey(world, regionX, regionZ));
     }
 
@@ -87,7 +87,7 @@ public final class BridgeBuildQualityTracker {
         LAST_QUALITIES.clear();
     }
 
-    private static String regionKey(ServerWorld world, int regionX, int regionZ) {
+    private static String regionKey(ServerLevel world, int regionX, int regionZ) {
         return BridgePaths.getRuntimeCacheKey(world) + "|" + regionX + "|" + regionZ;
     }
 
