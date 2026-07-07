@@ -11,6 +11,17 @@ base {
 }
 
 repositories {
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = "Modrinth"
+				url = "https://api.modrinth.com/maven"
+			}
+		}
+		filter {
+			includeGroup "maven.modrinth"
+		}
+	}
 }
 
 loom {
@@ -27,13 +38,16 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-	def libsDir = file("libs")
-	def xaeroWorldMapJar = new File(libsDir, "xaeroworldmap.jar")
-	def xaeroMiniMapJar = new File(libsDir, "xaerominimap.jar")
-	def voxyJar = new File(libsDir, "voxy-0.2.13-alpha.jar")
-	def voxyWorldGenJar = new File(libsDir, "voxyworldgenv2.jar")
-
-	modCompileOnly files(xaeroWorldMapJar, xaeroMiniMapJar, voxyJar, voxyWorldGenJar)
+    // sodium+mc1.21.11-0.8.7-fabric
+	modImplementation "maven.modrinth:AANobbMI:UddlN6L4"
+    // Xaero's World Map+fabric-1.21.11-1.41.2
+	modImplementation "maven.modrinth:NcUtCpym:1rgcnGza"
+    // Xaero's Minimap+fabric-1.21.11-26.1.4
+	modImplementation "maven.modrinth:1bokaNcj:rLF2AwoN"
+    // Voxy+0.2.16-beta
+	modImplementation "maven.modrinth:fxxUqruK:H3w2nVdU"
+    // Voxy worldgen+2.2.4
+	modImplementation "maven.modrinth:xT0lnNE9:68QZfMFI"
 }
 
 processResources {
